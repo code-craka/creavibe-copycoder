@@ -3,7 +3,17 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { BarChart, LineChart, Activity, Users, MousePointer, SplitSquareVertical, Settings } from "lucide-react"
+import {
+  BarChart,
+  LineChart,
+  Activity,
+  Users,
+  MousePointer,
+  SplitSquareVertical,
+  Settings,
+  BarChart2,
+  PieChart,
+} from "lucide-react"
 
 const items = [
   {
@@ -15,6 +25,16 @@ const items = [
     title: "Funnels",
     href: "/analytics?tab=funnels",
     icon: <BarChart className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "Cohort Analysis",
+    href: "/analytics/cohorts",
+    icon: <BarChart2 className="mr-2 h-4 w-4" />,
+  },
+  {
+    title: "User Lifecycle",
+    href: "/analytics/lifecycle",
+    icon: <PieChart className="mr-2 h-4 w-4" />,
   },
   {
     title: "User Paths",

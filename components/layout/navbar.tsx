@@ -70,6 +70,12 @@ export function Navbar() {
                 <Link href="/analytics">Dashboard</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/analytics/cohorts">Cohort Analysis</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics/lifecycle">User Lifecycle</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/analytics?tab=funnels">Funnels</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
