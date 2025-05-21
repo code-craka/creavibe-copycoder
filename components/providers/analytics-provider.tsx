@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import posthog from "posthog-js"
+import { usePostHog } from "posthog-js/react"
 import { EventTracker } from "@/components/analytics/event-tracker"
 
 type AnalyticsContextType = {
@@ -14,9 +14,9 @@ type AnalyticsContextType = {
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined)
 
-export function AnalyticsProvider({ children }: { children: ReactNode }) {
+export function AnalyticsContextProvider({ children }: { children: ReactNode }) {
   const [isOptedOut, setIsOptedOut] = useState<boolean>(false)
-  const [isInitialized, setIsInitialized] = useState<boolean>(false)
+  const posthog = usePostHog()
 
   useEffect(() => {
     // Check if user has opted out previously
@@ -24,36 +24,26 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       const hasOptedOut = localStorage.getItem("analytics-opt-out") === "true"
       setIsOptedOut(hasOptedOut)
 
-      // Check if PostHog is initialized
-      const checkPostHogInterval = setInterval(() => {
-        if (typeof posthog !== "undefined" && posthog.init) {
-          setIsInitialized(true)
-          clearInterval(checkPostHogInterval)
-
-          if (hasOptedOut) {
-            posthog.opt_out_capturing()
-          }
-        }
-      }, 500)
-
-      return () => clearInterval(checkPostHogInterval)
+      if (hasOptedOut && posthog) {
+        posthog.opt_out_capturing()
+      }
     }
-  }, [])
+  }, [posthog])
 
   const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-    if (!isOptedOut && isInitialized && typeof posthog !== "undefined") {
+    if (!isOptedOut && posthog) {
       posthog.capture(eventName, properties)
     }
   }
 
   const identifyUser = (userId: string, traits?: Record<string, any>) => {
-    if (!isOptedOut && isInitialized && typeof posthog !== "undefined") {
+    if (!isOptedOut && posthog) {
       posthog.identify(userId, traits)
     }
   }
 
   const optOut = () => {
-    if (isInitialized && typeof posthog !== "undefined") {
+    if (posthog) {
       posthog.opt_out_capturing()
     }
     localStorage.setItem("analytics-opt-out", "true")
@@ -61,7 +51,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   }
 
   const optIn = () => {
-    if (isInitialized && typeof posthog !== "undefined") {
+    if (posthog) {
       posthog.opt_in_capturing()
     }
     localStorage.setItem("analytics-opt-out", "false")

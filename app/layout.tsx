@@ -7,7 +7,8 @@ import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@/components/analytics/analytics"
-import { AnalyticsProvider } from "@/components/providers/analytics-provider"
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
+import { AnalyticsContextProvider } from "@/components/providers/analytics-provider"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -29,15 +30,17 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AnalyticsProvider>
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <Suspense fallback={null}>
-                <main className="flex-1">{children}</main>
-              </Suspense>
-              <Footer />
-            </div>
-            <Analytics />
-            <Toaster />
+            <AnalyticsContextProvider>
+              <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <Suspense fallback={null}>
+                  <main className="flex-1">{children}</main>
+                </Suspense>
+                <Footer />
+              </div>
+              <Analytics />
+              <Toaster />
+            </AnalyticsContextProvider>
           </AnalyticsProvider>
         </ThemeProvider>
       </body>
