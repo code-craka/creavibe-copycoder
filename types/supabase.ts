@@ -264,6 +264,49 @@ export interface Database {
           },
         ]
       }
+      user_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          created_at: string
+          last_active_at: string
+          ip_address: string | null
+          user_agent: string | null
+          device_type: string | null
+          location: string | null
+          is_current: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          created_at?: string
+          last_active_at: string
+          ip_address?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          location?: string | null
+          is_current?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          created_at?: string
+          last_active_at?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          device_type?: string | null
+          location?: string | null
+          is_current?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
