@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import posthog from "posthog-js"
 import { PostHogProvider } from "posthog-js/react"
+import { getAnalyticsStatus } from "@/app/actions/analytics"
 
 interface AnalyticsProviderProps {
   children: React.ReactNode
@@ -14,6 +15,7 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps): JSX.Ele
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [hasConsent, setHasConsent] = useState<boolean>(false)
+  const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
   useEffect(() => {
     // Check if user has given consent
@@ -22,20 +24,29 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps): JSX.Ele
     setHasConsent(userHasConsented)
 
     // Only initialize PostHog if consent is given
-    if (userHasConsented && typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-        api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
-        capture_pageview: false,
-        loaded: (ph) => {
-          if (process.env.NODE_ENV === "development") ph.debug()
-        },
-      })
+    if (userHasConsented && typeof window !== "undefined") {
+      const initPostHog = async () => {
+        const { isEnabled, host } = await getAnalyticsStatus()
+
+        if (isEnabled && window.POSTHOG_KEY) {
+          posthog.init(window.POSTHOG_KEY, {
+            api_host: host,
+            capture_pageview: false,
+            loaded: (ph) => {
+              if (process.env.NODE_ENV === "development") ph.debug()
+            },
+          })
+          setIsInitialized(true)
+        }
+      }
+
+      initPostHog()
     }
   }, [])
 
   useEffect(() => {
-    // Only track page views if consent is given
-    if (hasConsent && pathname) {
+    // Only track page views if consent is given and PostHog is initialized
+    if (hasConsent && isInitialized && pathname) {
       let url = window.origin + pathname
       if (searchParams?.toString()) {
         url = url + `?${searchParams.toString()}`
@@ -46,10 +57,10 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps): JSX.Ele
         $current_url: url,
       })
     }
-  }, [pathname, searchParams, hasConsent])
+  }, [pathname, searchParams, hasConsent, isInitialized])
 
-  // If no consent, just render children without PostHog provider
-  if (!hasConsent) {
+  // If no consent or not initialized, just render children without PostHog provider
+  if (!hasConsent || !isInitialized) {
     return <>{children}</>
   }
 

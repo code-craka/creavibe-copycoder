@@ -7,6 +7,8 @@ import { AnalyticsProvider } from "@/components/providers/analytics-provider"
 import { SkipToContent } from "@/components/skip-to-content"
 import { CookieConsent } from "@/components/cookie-consent"
 import { Suspense } from "react"
+import { PosthogScript } from "./posthog-script"
+import { cn } from "@/lib/utils"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
 
@@ -29,17 +31,20 @@ export const metadata: Metadata = {
     title: "CreaVibe - AI-Powered Content Creation Platform",
     description: "Create AI-powered content with WebBooks and project management capabilities",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>): JSX.Element {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <head>
+        <PosthogScript />
+      </head>
+      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AnalyticsProvider>
             <SkipToContent />

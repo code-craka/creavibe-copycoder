@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import { initializeAnalytics } from "@/app/actions/analytics"
 
 type ConsentStatus = "pending" | "accepted" | "declined"
 
@@ -22,21 +23,25 @@ export function CookieConsent(): JSX.Element | null {
     }
   }, [])
 
-  const handleAccept = (): void => {
+  const handleAccept = async (): Promise<void> => {
     localStorage.setItem("cookie-consent", "accepted")
     setConsentStatus("accepted")
     setIsVisible(false)
 
-    // Initialize analytics only after consent
-    if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-      import("posthog-js").then((posthog) => {
-        posthog.default.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
-          api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
-          loaded: (ph) => {
-            if (process.env.NODE_ENV === "development") ph.debug()
-          },
+    // Initialize analytics only after consent, using the server action
+    if (typeof window !== "undefined") {
+      const { isConfigured, apiHost } = await initializeAnalytics()
+
+      if (isConfigured) {
+        import("posthog-js").then((posthog) => {
+          posthog.default.init(window.POSTHOG_KEY || "", {
+            api_host: apiHost,
+            loaded: (ph) => {
+              if (process.env.NODE_ENV === "development") ph.debug()
+            },
+          })
         })
-      })
+      }
     }
   }
 
