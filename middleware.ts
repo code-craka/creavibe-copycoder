@@ -56,6 +56,39 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Add security headers
+  const ContentSecurityPolicy = `
+    default-src 'self';
+    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.posthog.com https://*.vercel-insights.com;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data: https://images.unsplash.com;
+    font-src 'self';
+    connect-src 'self' https://vitals.vercel-insights.com https://app.posthog.com https://*.supabase.co;
+    frame-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    block-all-mixed-content;
+    upgrade-insecure-requests;
+  `
+
+  // Add security headers
+  const securityHeaders = {
+    "Content-Security-Policy": ContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+  }
+
+  // Add security headers to the response
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    res.headers.set(key, value)
+  })
+
   return res
 }
 
