@@ -105,6 +105,82 @@ export interface Database {
           metadata?: Json | null
         }
       }
+      api_tokens: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          user_id: string
+          name: string
+          token: string
+          last_used_at: string | null
+          expires_at: string | null
+          status: string
+          permissions: string[]
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          name: string
+          token: string
+          last_used_at?: string | null
+          expires_at?: string | null
+          status?: string
+          permissions?: string[]
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          name?: string
+          token?: string
+          last_used_at?: string | null
+          expires_at?: string | null
+          status?: string
+          permissions?: string[]
+        }
+      }
+      api_usage: {
+        Row: {
+          id: string
+          created_at: string
+          token_id: string
+          endpoint: string
+          status_code: number
+          response_time: number
+          request_size: number
+          response_size: number
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          token_id: string
+          endpoint: string
+          status_code: number
+          response_time: number
+          request_size: number
+          response_size: number
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          token_id?: string
+          endpoint?: string
+          status_code?: number
+          response_time?: number
+          request_size?: number
+          response_size?: number
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
