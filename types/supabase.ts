@@ -181,6 +181,128 @@ export interface Database {
           user_agent?: string | null
         }
       }
+      permission_sets: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          name: string
+          description: string | null
+          permissions: Json
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name: string
+          description?: string | null
+          permissions: Json
+          user_id: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          name?: string
+          description?: string | null
+          permissions?: Json
+          user_id?: string
+        }
+      }
+      token_permission_sets: {
+        Row: {
+          id: string
+          created_at: string
+          token_id: string
+          permission_set_id: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          token_id: string
+          permission_set_id: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          token_id?: string
+          permission_set_id?: string
+        }
+      }
+      usage_limits: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          token_id: string
+          limit_type: string
+          limit_value: number
+          time_period: string
+          is_active: boolean
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          token_id: string
+          limit_type: string
+          limit_value: number
+          time_period: string
+          is_active?: boolean
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          token_id?: string
+          limit_type?: string
+          limit_value?: number
+          time_period?: string
+          is_active?: boolean
+        }
+      }
+      webhook_configs: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          user_id: string
+          name: string
+          url: string
+          secret: string
+          events: string[]
+          is_active: boolean
+          last_triggered_at: string | null
+          failure_count: number
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          user_id: string
+          name: string
+          url: string
+          secret: string
+          events: string[]
+          is_active?: boolean
+          last_triggered_at?: string | null
+          failure_count?: number
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+          name?: string
+          url?: string
+          secret?: string
+          events?: string[]
+          is_active?: boolean
+          last_triggered_at?: string | null
+          failure_count?: number
+        }
+      }
     }
     Views: {
       [_ in never]: never
