@@ -70,6 +70,8 @@ export interface Database {
           last_used_at: string | null
           created_at: string
           revoked: boolean
+          permissions: Json | null
+          expires_at: string | null
         }
         Insert: {
           id?: string
@@ -79,6 +81,8 @@ export interface Database {
           last_used_at?: string | null
           created_at?: string
           revoked?: boolean
+          permissions?: Json | null
+          expires_at?: string | null
         }
         Update: {
           id?: string
@@ -88,6 +92,8 @@ export interface Database {
           last_used_at?: string | null
           created_at?: string
           revoked?: boolean
+          permissions?: Json | null
+          expires_at?: string | null
         }
         Relationships: [
           {
@@ -160,6 +166,55 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      linked_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          provider: string
+          provider_user_id: string
+          created_at: string
+          updated_at: string
+          access_token: string
+          refresh_token: string | null
+          expires_at: string | null
+          provider_username: string | null
+          provider_avatar: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: string
+          provider_user_id: string
+          created_at?: string
+          updated_at?: string
+          access_token: string
+          refresh_token?: string | null
+          expires_at?: string | null
+          provider_username?: string | null
+          provider_avatar?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: string
+          provider_user_id?: string
+          created_at?: string
+          updated_at?: string
+          access_token?: string
+          refresh_token?: string | null
+          expires_at?: string | null
+          provider_username?: string | null
+          provider_avatar?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linked_accounts_user_id_fkey"
             columns: ["user_id"]
             referencedRelation: "users"
             referencedColumns: ["id"]
