@@ -1,86 +1,100 @@
-import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
+import Image from "next/image"
 
 interface HeroProps {
-  title: ReactNode
-  description?: ReactNode
+  title: string
+  description?: string
   children?: ReactNode
+  image?: {
+    src: string
+    alt: string
+  }
   className?: string
-  titleClassName?: string
-  descriptionClassName?: string
-  contentClassName?: string
-  align?: "left" | "center" | "right"
-  size?: "sm" | "md" | "lg" | "xl"
+  imagePosition?: "right" | "left"
+  fullHeight?: boolean
+  overlay?: boolean
+  overlayOpacity?: number
+  centered?: boolean
 }
 
 export function Hero({
   title,
   description,
   children,
-  className,
-  titleClassName,
-  descriptionClassName,
-  contentClassName,
-  align = "left",
-  size = "lg",
-}: HeroProps): JSX.Element {
-  // Alignment classes
-  const getAlignmentClasses = () => {
-    switch (align) {
-      case "center":
-        return "text-center items-center"
-      case "right":
-        return "text-right items-end"
-      default:
-        return "text-left items-start"
-    }
-  }
-
-  // Size classes
-  const getSizeClasses = () => {
-    switch (size) {
-      case "sm":
-        return {
-          title: "text-3xl md:text-4xl",
-          description: "max-w-2xl text-base md:text-lg",
-          spacing: "space-y-4",
-        }
-      case "md":
-        return {
-          title: "text-4xl md:text-5xl",
-          description: "max-w-3xl text-lg md:text-xl",
-          spacing: "space-y-6",
-        }
-      case "lg":
-        return {
-          title: "text-5xl md:text-6xl",
-          description: "max-w-4xl text-xl md:text-2xl",
-          spacing: "space-y-8",
-        }
-      case "xl":
-        return {
-          title: "text-6xl md:text-7xl",
-          description: "max-w-5xl text-2xl md:text-3xl",
-          spacing: "space-y-10",
-        }
-      default:
-        return {
-          title: "text-4xl md:text-5xl",
-          description: "max-w-3xl text-lg md:text-xl",
-          spacing: "space-y-6",
-        }
-    }
-  }
-
-  const sizeClasses = getSizeClasses()
-
+  image,
+  className = "",
+  imagePosition = "right",
+  fullHeight = false,
+  overlay = false,
+  overlayOpacity = 0.5,
+  centered = false,
+}: HeroProps) {
   return (
-    <div className={cn("flex flex-col", getAlignmentClasses(), sizeClasses.spacing, className)}>
-      <h1 className={cn("font-bold tracking-tight", sizeClasses.title, titleClassName)}>{title}</h1>
-      {description && (
-        <p className={cn("text-muted-foreground", sizeClasses.description, descriptionClassName)}>{description}</p>
+    <section className={`w-full ${fullHeight ? "min-h-screen" : "py-12 md:py-24 lg:py-32"} relative ${className}`}>
+      {image && overlay && (
+        <div
+          className="absolute inset-0 z-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+          aria-hidden="true"
+        />
       )}
-      {children && <div className={cn("flex flex-wrap gap-4", contentClassName)}>{children}</div>}
-    </div>
+
+      {image && (
+        <div className="absolute inset-0 z-0">
+          <Image src={image.src || "/placeholder.svg"} alt={image.alt} fill className="object-cover" priority />
+        </div>
+      )}
+
+      <div className="container px-4 md:px-6 mx-auto max-w-7xl relative z-10">
+        <div
+          className={`grid gap-6 ${
+            image && !overlay
+              ? imagePosition === "right"
+                ? "lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_600px]"
+                : "lg:grid-cols-[400px_1fr] xl:grid-cols-[600px_1fr]"
+              : ""
+          }`}
+        >
+          <div
+            className={`flex flex-col justify-center space-y-4 ${
+              centered || (image && overlay) ? "items-center text-center" : ""
+            } ${image && overlay ? "mx-auto max-w-3xl" : ""}`}
+          >
+            <div className="space-y-2">
+              <h1
+                className={`text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none ${
+                  image && overlay ? "text-white" : ""
+                }`}
+              >
+                {title}
+              </h1>
+              {description && (
+                <p
+                  className={`max-w-[600px] ${
+                    image && overlay ? "text-white/90" : "text-muted-foreground"
+                  } md:text-xl ${centered ? "mx-auto" : ""}`}
+                >
+                  {description}
+                </p>
+              )}
+            </div>
+            {children && <div className="flex flex-wrap gap-4">{children}</div>}
+          </div>
+
+          {image && !overlay && imagePosition === "right" && (
+            <div className="relative aspect-video overflow-hidden rounded-xl lg:aspect-square">
+              <Image
+                src={image.src || "/placeholder.svg"}
+                alt={image.alt}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }

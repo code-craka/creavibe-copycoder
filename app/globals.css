@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    --background: 223 208 184; /* #DFD0B8 */
-    --foreground: 34 40 49; /* #222831 */
-    --card: 248 246 242; /* #F8F6F2 */
-    --card-foreground: 34 40 49; /* #222831 */
-    --popover: 248 246 242; /* #F8F6F2 */
-    --popover-foreground: 34 40 49; /* #222831 */
-    --primary: 57 62 70; /* #393E46 */
-    --primary-foreground: 248 246 242; /* #F8F6F2 */
-    --secondary: 243 241 237; /* #F3F1ED */
-    --secondary-foreground: 34 40 49; /* #222831 */
-    --muted: 243 241 237; /* #F3F1ED */
-    --muted-foreground: 148 137 121; /* #948979 */
-    --accent: 148 137 121; /* #948979 */
-    --accent-foreground: 248 246 242; /* #F8F6F2 */
-    --destructive: 239 68 68; /* #EF4444 */
-    --destructive-foreground: 248 246 242; /* #F8F6F2 */
-    --border: 225 223 214; /* #E1DFD6 */
-    --input: 225 223 214; /* #E1DFD6 */
-    --ring: 57 62 70; /* #393E46 */
+    --background: #dfd0b8;
+    --foreground: #222831;
+    --card: #f8f6f2;
+    --card-foreground: #222831;
+    --popover: #f8f6f2;
+    --popover-foreground: #222831;
+    --primary: #393e46;
+    --primary-foreground: #f8f6f2;
+    --secondary: #f3f1ed;
+    --secondary-foreground: #222831;
+    --muted: #f3f1ed;
+    --muted-foreground: #948979;
+    --accent: #948979;
+    --accent-foreground: #f8f6f2;
+    --destructive: #ef4444;
+    --destructive-foreground: #f8f6f2;
+    --border: #e1dfd6;
+    --input: #e1dfd6;
+    --ring: #393e46;
     --radius: 0.5rem;
-    --surface: 248 246 242; /* #F8F6F2 */
+    --surface: #f8f6f2;
   }
 
   .dark {
-    --background: 34 40 49; /* #222831 */
-    --foreground: 243 241 237; /* #F3F1ED */
-    --card: 46 52 61; /* #2E343D */
-    --card-foreground: 243 241 237; /* #F3F1ED */
-    --popover: 46 52 61; /* #2E343D */
-    --popover-foreground: 243 241 237; /* #F3F1ED */
-    --primary: 223 208 184; /* #DFD0B8 */
-    --primary-foreground: 34 40 49; /* #222831 */
-    --secondary: 46 52 61; /* #2E343D */
-    --secondary-foreground: 243 241 237; /* #F3F1ED */
-    --muted: 46 52 61; /* #2E343D */
-    --muted-foreground: 179 167 141; /* #B3A78D */
-    --accent: 200 191 169; /* #C8BFA9 */
-    --accent-foreground: 34 40 49; /* #222831 */
-    --destructive: 127 29 29; /* #7F1D1D */
-    --destructive-foreground: 243 241 237; /* #F3F1ED */
-    --border: 62 67 74; /* #3E434A */
-    --input: 62 67 74; /* #3E434A */
-    --ring: 223 208 184; /* #DFD0B8 */
-    --surface: 46 52 61; /* #2E343D */
+    --background: #222831;
+    --foreground: #f3f1ed;
+    --card: #2e343d;
+    --card-foreground: #f3f1ed;
+    --popover: #2e343d;
+    --popover-foreground: #f3f1ed;
+    --primary: #dfd0b8;
+    --primary-foreground: #222831;
+    --secondary: #2e343d;
+    --secondary-foreground: #f3f1ed;
+    --muted: #2e343d;
+    --muted-foreground: #b3a78d;
+    --accent: #c8bfa9;
+    --accent-foreground: #222831;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f3f1ed;
+    --border: #3e434a;
+    --input: #3e434a;
+    --ring: #dfd0b8;
+    --surface: #2e343d;
   }
 }
 
@@ -57,7 +57,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   /* Improved focus styles for better accessibility */
@@ -87,55 +86,5 @@
     clip: auto;
     white-space: normal;
     z-index: 9999;
-  }
-}
-
-/* Typography styles */
-@layer components {
-  .h1 {
-    @apply text-4xl font-bold tracking-tight lg:text-5xl;
-  }
-
-  .h2 {
-    @apply text-3xl font-bold tracking-tight lg:text-4xl;
-  }
-
-  .h3 {
-    @apply text-2xl font-bold tracking-tight lg:text-3xl;
-  }
-
-  .h4 {
-    @apply text-xl font-bold tracking-tight lg:text-2xl;
-  }
-
-  .p-lead {
-    @apply text-xl text-muted-foreground;
-  }
-
-  .p-large {
-    @apply text-lg;
-  }
-
-  .p {
-    @apply text-base leading-7;
-  }
-
-  .p-small {
-    @apply text-sm leading-6;
-  }
-
-  .p-xs {
-    @apply text-xs leading-5;
-  }
-}
-
-/* Accessibility utilities */
-@layer utilities {
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
-  }
-
-  .visually-hidden {
-    @apply sr-only;
   }
 }

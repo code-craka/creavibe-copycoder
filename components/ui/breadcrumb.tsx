@@ -1,8 +1,6 @@
 import type React from "react"
-import { Fragment } from "react"
 import Link from "next/link"
 import { ChevronRight, Home } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 export interface BreadcrumbItem {
   label: string
@@ -12,59 +10,53 @@ export interface BreadcrumbItem {
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[]
-  className?: string
   homeHref?: string
   showHomeIcon?: boolean
+  className?: string
 }
 
-export function Breadcrumb({ items, className, homeHref = "/", showHomeIcon = true }: BreadcrumbProps): JSX.Element {
+export function Breadcrumb({ items, homeHref = "/", showHomeIcon = true, className = "" }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className={cn("flex", className)}>
-      <ol className="flex items-center flex-wrap">
+    <nav aria-label="Breadcrumb" className={`flex ${className}`}>
+      <ol className="flex items-center space-x-2 text-sm">
         {showHomeIcon && (
-          <li className="flex items-center">
+          <li>
             <Link
               href={homeHref}
-              className="text-muted-foreground hover:text-foreground flex items-center"
+              className="flex items-center text-muted-foreground hover:text-foreground"
               aria-label="Home"
             >
               <Home className="h-4 w-4" />
             </Link>
-            {items.length > 0 && <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" aria-hidden="true" />}
           </li>
         )}
-        {items.map((item, index) => {
-          const isLast = index === items.length - 1
 
-          return (
-            <Fragment key={item.label}>
-              <li className="flex items-center">
-                {item.href && !isLast ? (
-                  <Link
-                    href={item.href}
-                    className="text-muted-foreground hover:text-foreground flex items-center"
-                    aria-current={isLast ? "page" : undefined}
-                  >
-                    {item.icon && <span className="mr-1">{item.icon}</span>}
-                    <span>{item.label}</span>
-                  </Link>
-                ) : (
-                  <span
-                    className={cn(
-                      "flex items-center",
-                      isLast ? "font-medium text-foreground" : "text-muted-foreground",
-                    )}
-                    aria-current={isLast ? "page" : undefined}
-                  >
-                    {item.icon && <span className="mr-1">{item.icon}</span>}
-                    <span>{item.label}</span>
-                  </span>
-                )}
-              </li>
-              {!isLast && <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" aria-hidden="true" />}
-            </Fragment>
-          )
-        })}
+        {showHomeIcon && items.length > 0 && (
+          <li className="flex items-center">
+            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          </li>
+        )}
+
+        {items.map((item, index) => (
+          <li key={index} className="flex items-center">
+            {index > 0 && <ChevronRight className="mx-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+
+            {item.href && index < items.length - 1 ? (
+              <Link href={item.href} className="flex items-center text-muted-foreground hover:text-foreground">
+                {item.icon && <span className="mr-1">{item.icon}</span>}
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                className="flex items-center font-medium text-foreground"
+                aria-current={index === items.length - 1 ? "page" : undefined}
+              >
+                {item.icon && <span className="mr-1">{item.icon}</span>}
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
       </ol>
     </nav>
   )

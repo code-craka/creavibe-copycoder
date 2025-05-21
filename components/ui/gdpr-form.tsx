@@ -3,113 +3,156 @@
 import type React from "react"
 
 import { useState, type ReactNode } from "react"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { z } from "zod"
 
-interface GDPRFormProps {
-  onSubmit: (data: any, marketingConsent: boolean) => void
+interface GdprFormProps {
+  onSubmit: (data: Record<string, any>) => Promise<void>
   children: ReactNode
+  submitText?: string
   className?: string
-  submitButton: ReactNode
-  marketingLabel?: string
-  marketingDescription?: string
+  gdprText?: string
+  marketingText?: string
+  showMarketing?: boolean
+  validationSchema?: z.ZodObject<any>
 }
 
-export function GDPRForm({
+export function GdprForm({
   onSubmit,
   children,
-  className,
-  submitButton,
-  marketingLabel = "I agree to receive marketing communications",
-  marketingDescription = "We'll send you updates about new features and promotions. You can unsubscribe at any time.",
-}: GDPRFormProps) {
+  submitText = "Submit",
+  className = "",
+  gdprText = "I agree to the Terms of Service and Privacy Policy",
+  marketingText = "I agree to receive marketing communications",
+  showMarketing = true,
+  validationSchema,
+}: GdprFormProps) {
   const [gdprConsent, setGdprConsent] = useState<boolean>(false)
   const [marketingConsent, setMarketingConsent] = useState<boolean>(false)
-  const [gdprError, setGdprError] = useState<string>("")
+  const [loading, setLoading] = useState<boolean>(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setErrors({})
 
-    // Check GDPR consent
     if (!gdprConsent) {
-      setGdprError("You must agree to the terms and privacy policy")
+      setErrors((prev) => ({ ...prev, gdpr: "You must agree to the terms and privacy policy" }))
       return
     }
-
-    // Clear any previous errors
-    setGdprError("")
 
     // Get form data
     const formData = new FormData(e.currentTarget)
     const data: Record<string, any> = {}
 
-    // Convert FormData to object
     formData.forEach((value, key) => {
       data[key] = value
     })
 
-    // Call the onSubmit handler with form data and marketing consent
-    onSubmit(data, marketingConsent)
+    // Add consent data
+    data.gdprConsent = gdprConsent
+    data.marketingConsent = marketingConsent
+
+    // Validate with schema if provided
+    if (validationSchema) {
+      try {
+        validationSchema.parse(data)
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const newErrors: Record<string, string> = {}
+          error.errors.forEach((err) => {
+            if (typeof err.path[0] === "string") {
+              newErrors[err.path[0]] = err.message
+            }
+          })
+          setErrors(newErrors)
+          return
+        }
+      }
+    }
+
+    try {
+      setLoading(true)
+      await onSubmit(data)
+    } catch (error) {
+      console.error("Form submission error:", error)
+      setErrors((prev) => ({ ...prev, form: "An error occurred. Please try again." }))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+    <form onSubmit={handleSubmit} className={className} noValidate>
       {children}
 
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6">
         <div className="flex items-start space-x-2">
           <Checkbox
             id="gdpr-consent"
             checked={gdprConsent}
-            onCheckedChange={(checked) => {
-              setGdprConsent(checked === true)
-              if (checked === true) setGdprError("")
-            }}
-            aria-invalid={!!gdprError}
-            aria-describedby={gdprError ? "gdpr-error" : undefined}
+            onCheckedChange={(checked) => setGdprConsent(checked === true)}
+            aria-invalid={!!errors.gdpr}
+            aria-describedby={errors.gdpr ? "gdpr-error" : undefined}
           />
           <div className="grid gap-1.5 leading-none">
-            <label
+            <Label
               htmlFor="gdpr-consent"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I agree to the{" "}
-              <Link href="/terms" className="text-primary underline-offset-4 hover:underline">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="text-primary underline-offset-4 hover:underline">
-                Privacy Policy
-              </Link>
-            </label>
-            {gdprError && (
+              {gdprText.includes("Terms") ? (
+                <>
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-primary underline-offset-4 hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-primary underline-offset-4 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </>
+              ) : (
+                gdprText
+              )}
+            </Label>
+            {errors.gdpr && (
               <p id="gdpr-error" className="text-sm text-destructive">
-                {gdprError}
+                {errors.gdpr}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-start space-x-2">
-          <Checkbox
-            id="marketing-consent"
-            checked={marketingConsent}
-            onCheckedChange={(checked) => setMarketingConsent(checked === true)}
-          />
-          <div className="grid gap-1.5 leading-none">
-            <label
-              htmlFor="marketing-consent"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {marketingLabel}
-            </label>
-            <p className="text-sm text-muted-foreground">{marketingDescription}</p>
+        {showMarketing && (
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="marketing-consent"
+              checked={marketingConsent}
+              onCheckedChange={(checked) => setMarketingConsent(checked === true)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <Label
+                htmlFor="marketing-consent"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {marketingText}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                You can unsubscribe at any time by clicking the link in the footer of our emails.
+              </p>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {submitButton}
+        {errors.form && <p className="text-sm text-destructive">{errors.form}</p>}
+
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? "Processing..." : submitText}
+        </Button>
+      </div>
     </form>
   )
 }

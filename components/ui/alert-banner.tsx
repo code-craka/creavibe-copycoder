@@ -1,22 +1,17 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, type ReactNode } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { X } from "lucide-react"
 
 interface AlertBannerProps {
   title: string
-  description: string
-  variant?: "default" | "destructive" | "success" | "warning" | "info"
-  icon?: React.ReactNode
-  className?: string
+  description: string | ReactNode
+  variant?: "default" | "destructive" | "success" | "warning"
+  icon?: ReactNode
   dismissible?: boolean
-  duration?: number | null // null means it won't auto-dismiss
-  onDismiss?: () => void
+  className?: string
 }
 
 export function AlertBanner({
@@ -24,55 +19,40 @@ export function AlertBanner({
   description,
   variant = "default",
   icon,
-  className,
-  dismissible = true,
-  duration = null,
-  onDismiss,
+  dismissible = false,
+  className = "",
 }: AlertBannerProps) {
   const [isVisible, setIsVisible] = useState(true)
 
-  // Handle auto-dismiss
-  useEffect(() => {
-    if (duration && isVisible) {
-      const timer = setTimeout(() => {
-        setIsVisible(false)
-        onDismiss?.()
-      }, duration)
-      return () => clearTimeout(timer)
-    }
-  }, [duration, isVisible, onDismiss])
-
-  if (!isVisible) return null
-
-  const handleDismiss = () => {
-    setIsVisible(false)
-    onDismiss?.()
+  if (!isVisible) {
+    return null
   }
 
-  // Determine variant-specific styles
-  const variantStyles = {
-    default: "",
-    destructive: "border-destructive text-destructive",
-    success: "border-green-500 text-green-700 dark:text-green-400",
-    warning: "border-yellow-500 text-yellow-700 dark:text-yellow-400",
-    info: "border-blue-500 text-blue-700 dark:text-blue-400",
+  // Determine the appropriate classes based on the variant
+  let alertClassName = className
+
+  if (variant === "success") {
+    alertClassName += " border-green-500 bg-green-50 dark:bg-green-950/30"
+  } else if (variant === "warning") {
+    alertClassName += " border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30"
+  } else if (variant === "destructive") {
+    // The destructive variant is already styled by the Alert component
   }
 
   return (
-    <Alert
-      className={cn("animate-fade-in relative", variantStyles[variant], dismissible && "pr-12", className)}
-      role="alert"
-    >
+    <Alert className={alertClassName} variant={variant === "destructive" ? "destructive" : "default"}>
       {icon}
-      <AlertTitle>{title}</AlertTitle>
-      <AlertDescription>{description}</AlertDescription>
+      <div className="flex-1">
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>{description}</AlertDescription>
+      </div>
       {dismissible && (
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-2"
-          onClick={handleDismiss}
-          aria-label="Dismiss alert"
+          className="h-6 w-6"
+          onClick={() => setIsVisible(false)}
+          aria-label="Dismiss notification"
         >
           <X className="h-4 w-4" />
         </Button>

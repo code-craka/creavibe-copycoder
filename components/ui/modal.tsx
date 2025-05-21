@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 interface ModalProps {
   title: string
@@ -18,11 +17,11 @@ interface ModalProps {
   children: ReactNode
   open: boolean
   onOpenChange: (open: boolean) => void
-  className?: string
-  contentClassName?: string
   footer?: ReactNode
-  closeButton?: boolean
-  closeLabel?: string
+  showCloseButton?: boolean
+  closeButtonText?: string
+  onClose?: () => void
+  className?: string
 }
 
 export function Modal({
@@ -31,11 +30,11 @@ export function Modal({
   children,
   open,
   onOpenChange,
-  className,
-  contentClassName,
   footer,
-  closeButton = true,
-  closeLabel = "Close",
+  showCloseButton = true,
+  closeButtonText = "Close",
+  onClose,
+  className = "",
 }: ModalProps) {
   const [isMounted, setIsMounted] = useState(false)
 
@@ -43,28 +42,33 @@ export function Modal({
     setIsMounted(true)
   }, [])
 
+  const handleClose = () => {
+    onOpenChange(false)
+    if (onClose) {
+      onClose()
+    }
+  }
+
   if (!isMounted) {
     return null
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("sm:max-w-lg", className)}>
+      <DialogContent className={className}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className={cn("py-4", contentClassName)}>{children}</div>
-        {(footer || closeButton) && (
-          <DialogFooter>
-            {footer}
-            {closeButton && (
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                {closeLabel}
+        <div className="py-4">{children}</div>
+        <DialogFooter>
+          {footer ||
+            (showCloseButton && (
+              <Button variant="outline" onClick={handleClose}>
+                {closeButtonText}
               </Button>
-            )}
-          </DialogFooter>
-        )}
+            ))}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
