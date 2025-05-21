@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer"
 import { AnalyticsProvider } from "@/components/providers/analytics-provider"
 import { SkipToContent } from "@/components/skip-to-content"
 import { AnalyticsEvents } from "@/components/analytics-event"
+import { CookieConsent } from "@/components/cookie-consent"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
@@ -38,7 +39,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
-}>) {
+}>): JSX.Element {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -55,6 +56,7 @@ export default function RootLayout({
               </Suspense>
               <Footer />
             </div>
+            <CookieConsent />
           </AnalyticsProvider>
         </ThemeProvider>
       </body>

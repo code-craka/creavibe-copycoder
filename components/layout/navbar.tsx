@@ -8,16 +8,16 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
-import { ModeToggle } from "@/components/mode-toggle"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { useState } from "react"
 
-export function Navbar() {
+export function Navbar(): JSX.Element {
   const pathname = usePathname()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false)
 
-  const toggleMobileMenu = () => {
+  const toggleMobileMenu = (): void => {
     setMobileMenuOpen(!mobileMenuOpen)
   }
 
@@ -81,6 +81,16 @@ export function Navbar() {
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
+            <NavigationMenuItem>
+              <Link href="/style-guide" legacyBehavior passHref>
+                <NavigationMenuLink
+                  className={navigationMenuTriggerStyle()}
+                  aria-current={pathname === "/style-guide" ? "page" : undefined}
+                >
+                  Style Guide
+                </NavigationMenuLink>
+              </Link>
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
 
@@ -97,7 +107,7 @@ export function Navbar() {
         </Button>
 
         <div className="hidden md:flex ml-auto items-center space-x-4">
-          <ModeToggle />
+          <ThemeToggle />
           <Button variant="outline" asChild>
             <Link href="/login">Sign In</Link>
           </Button>
@@ -151,8 +161,16 @@ export function Navbar() {
             >
               Contact
             </Link>
+            <Link
+              href="/style-guide"
+              className="px-2 py-1 rounded hover:bg-muted"
+              aria-current={pathname === "/style-guide" ? "page" : undefined}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Style Guide
+            </Link>
             <div className="pt-2 flex flex-col space-y-2">
-              <ModeToggle />
+              <ThemeToggle />
               <Button variant="outline" asChild className="w-full">
                 <Link href="/login">Sign In</Link>
               </Button>
