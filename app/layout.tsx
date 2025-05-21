@@ -29,14 +29,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AnalyticsProvider>
-            <Analytics />
             <div className="flex flex-col min-h-screen">
               <Navbar />
-              <Suspense>
+              <Suspense fallback={null}>
                 <main className="flex-1">{children}</main>
               </Suspense>
               <Footer />
             </div>
+            <Analytics />
             <Toaster />
           </AnalyticsProvider>
         </ThemeProvider>

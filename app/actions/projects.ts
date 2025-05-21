@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { cookies } from "next/headers"
 
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -74,6 +75,22 @@ export async function createProject(formData: FormData) {
     return { error: error.message, data: null }
   }
 
+  // Track project creation event
+  // Note: Server actions can't directly use client-side analytics
+  // We'll set a cookie to track this event on the client side
+  const cookieStore = cookies()
+  cookieStore.set(
+    "track-event",
+    JSON.stringify({
+      name: "project_created",
+      properties: {
+        project_id: data[0].id,
+        project_title: title,
+      },
+    }),
+    { maxAge: 60, path: "/" },
+  )
+
   revalidatePath("/dashboard")
   return { data, error: null }
 }
@@ -108,6 +125,20 @@ export async function deleteProject(projectId: string) {
     console.error("Error deleting project:", error)
     return { error: error.message, data: null }
   }
+
+  // Track project deletion event
+  const cookieStore = cookies()
+  cookieStore.set(
+    "track-event",
+    JSON.stringify({
+      name: "project_deleted",
+      properties: {
+        project_id: projectId,
+        project_title: project.title,
+      },
+    }),
+    { maxAge: 60, path: "/" },
+  )
 
   revalidatePath("/dashboard")
   return { data: { success: true }, error: null }
