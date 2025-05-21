@@ -12,6 +12,9 @@ export interface Database {
           avatar_url: string | null
           website: string | null
           email: string | null
+          plan: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
         }
         Insert: {
           id: string
@@ -21,6 +24,9 @@ export interface Database {
           avatar_url?: string | null
           website?: string | null
           email?: string | null
+          plan?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
         }
         Update: {
           id?: string
@@ -30,6 +36,9 @@ export interface Database {
           avatar_url?: string | null
           website?: string | null
           email?: string | null
+          plan?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
         }
         Relationships: [
           {
@@ -104,6 +113,86 @@ export interface Database {
             foreignKeyName: "api_usage_token_id_fkey"
             columns: ["token_id"]
             referencedRelation: "api_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_invoice_id: string
+          amount: number
+          status: string
+          created_at: string
+          pdf_url: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_invoice_id: string
+          amount: number
+          status: string
+          created_at?: string
+          pdf_url?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_invoice_id?: string
+          amount?: number
+          status?: string
+          created_at?: string
+          pdf_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          stripe_payment_method_id: string
+          card_brand: string
+          card_last4: string
+          card_exp_month: number
+          card_exp_year: number
+          is_default: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          stripe_payment_method_id: string
+          card_brand: string
+          card_last4: string
+          card_exp_month: number
+          card_exp_year: number
+          is_default: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          stripe_payment_method_id?: string
+          card_brand?: string
+          card_last4?: string
+          card_exp_month?: number
+          card_exp_year?: number
+          is_default?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
