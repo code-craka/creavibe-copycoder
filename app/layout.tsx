@@ -3,12 +3,10 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { AnalyticsProvider } from "@/components/providers/analytics-provider"
 import { SkipToContent } from "@/components/skip-to-content"
-import { CookieConsent } from "@/components/cookie-consent"
 import { Suspense } from "react"
-import { PosthogScript } from "./posthog-script"
-import { cn } from "@/lib/utils"
+import { AnalyticsWrapper } from "@/components/analytics/analytics-wrapper"
+import { CookieConsentWrapper } from "@/components/analytics/cookie-consent-wrapper"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
 
@@ -41,12 +39,9 @@ export default async function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <PosthogScript />
-      </head>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", inter.className)}>
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AnalyticsProvider>
+          <AnalyticsWrapper>
             <SkipToContent />
             <div className="flex flex-col min-h-screen">
               <Suspense>
@@ -55,8 +50,8 @@ export default async function RootLayout({
                 </main>
               </Suspense>
             </div>
-            <CookieConsent />
-          </AnalyticsProvider>
+            <CookieConsentWrapper />
+          </AnalyticsWrapper>
         </ThemeProvider>
       </body>
     </html>

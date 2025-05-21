@@ -4,11 +4,20 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
-import { initializeAnalytics } from "@/app/actions/analytics"
+import posthog from "posthog-js"
 
 type ConsentStatus = "pending" | "accepted" | "declined"
 
-export function CookieConsent(): JSX.Element | null {
+// These props are passed from the server component
+interface CookieConsentProps {
+  posthogKey?: string
+  posthogHost?: string
+}
+
+export function CookieConsent({
+  posthogKey,
+  posthogHost = "https://app.posthog.com",
+}: CookieConsentProps): JSX.Element | null {
   const [consentStatus, setConsentStatus] = useState<ConsentStatus>("pending")
   const [isVisible, setIsVisible] = useState<boolean>(false)
 
@@ -17,31 +26,35 @@ export function CookieConsent(): JSX.Element | null {
     const storedConsent = localStorage.getItem("cookie-consent")
     if (storedConsent) {
       setConsentStatus(storedConsent as ConsentStatus)
+
+      // If consent was previously accepted, initialize PostHog
+      if (storedConsent === "accepted" && posthogKey && !posthog.__loaded) {
+        posthog.init(posthogKey, {
+          api_host: posthogHost,
+          loaded: (ph) => {
+            if (process.env.NODE_ENV === "development") ph.debug()
+          },
+        })
+      }
     } else {
       // Show the consent banner if no previous choice was made
       setIsVisible(true)
     }
-  }, [])
+  }, [posthogKey, posthogHost])
 
-  const handleAccept = async (): Promise<void> => {
+  const handleAccept = (): void => {
     localStorage.setItem("cookie-consent", "accepted")
     setConsentStatus("accepted")
     setIsVisible(false)
 
-    // Initialize analytics only after consent, using the server action
-    if (typeof window !== "undefined") {
-      const { isConfigured, apiHost } = await initializeAnalytics()
-
-      if (isConfigured) {
-        import("posthog-js").then((posthog) => {
-          posthog.default.init(window.POSTHOG_KEY || "", {
-            api_host: apiHost,
-            loaded: (ph) => {
-              if (process.env.NODE_ENV === "development") ph.debug()
-            },
-          })
-        })
-      }
+    // Initialize analytics only after consent
+    if (posthogKey && !posthog.__loaded) {
+      posthog.init(posthogKey, {
+        api_host: posthogHost,
+        loaded: (ph) => {
+          if (process.env.NODE_ENV === "development") ph.debug()
+        },
+      })
     }
   }
 
