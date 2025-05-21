@@ -1,59 +1,58 @@
-import type React from "react"
 import Link from "next/link"
 import { ChevronRight, Home } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-export interface BreadcrumbItem {
+interface BreadcrumbItem {
   label: string
   href?: string
-  icon?: React.ReactNode
+  isCurrent?: boolean
 }
 
 interface BreadcrumbProps {
   items: BreadcrumbItem[]
-  homeHref?: string
-  showHomeIcon?: boolean
   className?: string
+  showHome?: boolean
 }
 
-export function Breadcrumb({ items, homeHref = "/", showHomeIcon = true, className = "" }: BreadcrumbProps) {
+export function Breadcrumb({ items, className, showHome = true }: BreadcrumbProps): JSX.Element {
   return (
-    <nav aria-label="Breadcrumb" className={`flex ${className}`}>
-      <ol className="flex items-center space-x-2 text-sm">
-        {showHomeIcon && (
-          <li>
+    <nav aria-label="Breadcrumb" className={cn("flex", className)}>
+      <ol className="flex items-center flex-wrap">
+        {showHome && (
+          <li className="flex items-center">
             <Link
-              href={homeHref}
-              className="flex items-center text-muted-foreground hover:text-foreground"
+              href="/"
+              className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Home"
             >
               <Home className="h-4 w-4" />
             </Link>
-          </li>
-        )}
-
-        {showHomeIcon && items.length > 0 && (
-          <li className="flex items-center">
-            <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" aria-hidden="true" />
           </li>
         )}
 
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            {index > 0 && <ChevronRight className="mx-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />}
-
-            {item.href && index < items.length - 1 ? (
-              <Link href={item.href} className="flex items-center text-muted-foreground hover:text-foreground">
-                {item.icon && <span className="mr-1">{item.icon}</span>}
-                {item.label}
-              </Link>
-            ) : (
-              <span
-                className="flex items-center font-medium text-foreground"
-                aria-current={index === items.length - 1 ? "page" : undefined}
-              >
-                {item.icon && <span className="mr-1">{item.icon}</span>}
+            {item.isCurrent ? (
+              <span className="text-sm font-medium" aria-current="page">
                 {item.label}
               </span>
+            ) : (
+              <>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span className="text-sm text-muted-foreground">{item.label}</span>
+                )}
+                {index < items.length - 1 && (
+                  <ChevronRight className="h-4 w-4 mx-2 text-muted-foreground" aria-hidden="true" />
+                )}
+              </>
             )}
           </li>
         ))}

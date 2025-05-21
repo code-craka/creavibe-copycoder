@@ -3,8 +3,11 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Navbar } from "@/components/layout/navbar"
+import { Footer } from "@/components/layout/footer"
 import { AnalyticsProvider } from "@/components/providers/analytics-provider"
 import { SkipToContent } from "@/components/skip-to-content"
+import { AnalyticsEvents } from "@/components/analytics-event"
 import { CookieConsent } from "@/components/cookie-consent"
 import { Suspense } from "react"
 
@@ -42,13 +45,16 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AnalyticsProvider>
+            <AnalyticsEvents />
             <SkipToContent />
             <div className="flex flex-col min-h-screen">
+              <Navbar />
               <Suspense>
                 <main id="main-content" className="flex-1">
                   {children}
                 </main>
               </Suspense>
+              <Footer />
             </div>
             <CookieConsent />
           </AnalyticsProvider>
