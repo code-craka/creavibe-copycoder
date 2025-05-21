@@ -16,6 +16,7 @@ const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefin
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const [isOptedOut, setIsOptedOut] = useState<boolean>(false)
+  const [isInitialized, setIsInitialized] = useState<boolean>(false)
 
   useEffect(() => {
     // Check if user has opted out previously
@@ -23,32 +24,46 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       const hasOptedOut = localStorage.getItem("analytics-opt-out") === "true"
       setIsOptedOut(hasOptedOut)
 
-      if (hasOptedOut) {
-        posthog.opt_out_capturing()
-      }
+      // Check if PostHog is initialized
+      const checkPostHogInterval = setInterval(() => {
+        if (typeof posthog !== "undefined" && posthog.init) {
+          setIsInitialized(true)
+          clearInterval(checkPostHogInterval)
+
+          if (hasOptedOut) {
+            posthog.opt_out_capturing()
+          }
+        }
+      }, 500)
+
+      return () => clearInterval(checkPostHogInterval)
     }
   }, [])
 
   const trackEvent = (eventName: string, properties?: Record<string, any>) => {
-    if (!isOptedOut) {
+    if (!isOptedOut && isInitialized && typeof posthog !== "undefined") {
       posthog.capture(eventName, properties)
     }
   }
 
   const identifyUser = (userId: string, traits?: Record<string, any>) => {
-    if (!isOptedOut) {
+    if (!isOptedOut && isInitialized && typeof posthog !== "undefined") {
       posthog.identify(userId, traits)
     }
   }
 
   const optOut = () => {
-    posthog.opt_out_capturing()
+    if (isInitialized && typeof posthog !== "undefined") {
+      posthog.opt_out_capturing()
+    }
     localStorage.setItem("analytics-opt-out", "true")
     setIsOptedOut(true)
   }
 
   const optIn = () => {
-    posthog.opt_in_capturing()
+    if (isInitialized && typeof posthog !== "undefined") {
+      posthog.opt_in_capturing()
+    }
     localStorage.setItem("analytics-opt-out", "false")
     setIsOptedOut(false)
   }

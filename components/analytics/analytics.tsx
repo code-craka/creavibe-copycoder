@@ -1,58 +1,80 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import posthog from "posthog-js"
 import { usePathname, useSearchParams } from "next/navigation"
+
+type PostHogConfig = {
+  apiKey: string
+  apiHost: string
+}
 
 export function Analytics() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [isInitialized, setIsInitialized] = useState(false)
 
+  // Initialize PostHog
   useEffect(() => {
-    // Initialize PostHog
-    if (typeof window !== "undefined") {
-      posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
-        api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://app.posthog.com",
-        capture_pageview: false, // We'll handle this manually
-        persistence: "localStorage",
-        autocapture: true,
-        session_recording: {
-          maskAllInputs: true,
-          maskInputOptions: {
-            password: true,
-            email: true,
-            number: true,
-            search: true,
-          },
-        },
-        loaded: (posthog) => {
-          if (process.env.NODE_ENV === "development") {
-            // Make available during development
-            window.posthog = posthog
-          }
-        },
-      })
+    const initPostHog = async () => {
+      if (typeof window === "undefined" || isInitialized) return
+
+      try {
+        // Fetch configuration from server
+        const response = await fetch("/api/analytics/config")
+        const config: PostHogConfig = await response.json()
+
+        if (config.apiKey) {
+          posthog.init(config.apiKey, {
+            api_host: config.apiHost,
+            capture_pageview: false,
+            persistence: "localStorage",
+            autocapture: true,
+            session_recording: {
+              maskAllInputs: true,
+              maskInputOptions: {
+                password: true,
+                email: true,
+                number: true,
+                search: true,
+              },
+            },
+            loaded: (posthog) => {
+              if (process.env.NODE_ENV === "development") {
+                // Make available during development
+                window.posthog = posthog
+              }
+            },
+          })
+          setIsInitialized(true)
+        }
+      } catch (error) {
+        console.error("Failed to initialize PostHog:", error)
+      }
     }
+
+    initPostHog()
 
     return () => {
-      // Cleanup if needed
-      posthog.shutdown()
+      if (isInitialized) {
+        posthog.shutdown()
+      }
     }
-  }, [])
+  }, [isInitialized])
 
   // Track page views
   useEffect(() => {
-    if (pathname) {
-      let url = window.origin + pathname
-      if (searchParams && searchParams.toString()) {
-        url = url + `?${searchParams.toString()}`
-      }
+    if (!isInitialized || !pathname) return
 
-      posthog.capture("$pageview", {
-        $current_url: url,
-      })
+    let url = window.origin + pathname
+    if (searchParams && searchParams.toString()) {
+      url = url + `?${searchParams.toString()}`
     }
-  }, [pathname, searchParams])
+
+    posthog.capture("$pageview", {
+      $current_url: url,
+    })
+  }, [pathname, searchParams, isInitialized])
 
   return null
 }
