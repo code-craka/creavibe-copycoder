@@ -5,7 +5,11 @@ import { ConversionFunnels } from "@/components/analytics-dashboard/conversion-f
 import { PageAnalytics } from "@/components/analytics-dashboard/page-analytics"
 import { ABTestingResults } from "@/components/analytics-dashboard/ab-testing-results"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageLayout } from "@/components/layout/page-layout"
 import type { Metadata } from "next"
+
+// Force dynamic rendering for this page
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Analytics Dashboard - CreaVibe",
@@ -14,39 +18,44 @@ export const metadata: Metadata = {
 
 export default function AnalyticsPage() {
   return (
-    <DashboardLayout title="Analytics Dashboard" description="Track and analyze user behavior and performance metrics">
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 h-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="funnels">Funnels</TabsTrigger>
-          <TabsTrigger value="heatmaps">Heatmaps</TabsTrigger>
-          <TabsTrigger value="abtests">A/B Tests</TabsTrigger>
-          <TabsTrigger value="events">Events</TabsTrigger>
-        </TabsList>
+    <PageLayout>
+      <DashboardLayout
+        title="Analytics Dashboard"
+        description="Track and analyze user behavior and performance metrics"
+      >
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 h-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="funnels">Funnels</TabsTrigger>
+            <TabsTrigger value="heatmaps">Heatmaps</TabsTrigger>
+            <TabsTrigger value="abtests">A/B Tests</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <OverviewMetrics />
-          <UserActivityChart />
-          <PageAnalytics />
-        </TabsContent>
+          <TabsContent value="overview" className="space-y-4">
+            <OverviewMetrics />
+            <UserActivityChart />
+            <PageAnalytics />
+          </TabsContent>
 
-        <TabsContent value="funnels" className="space-y-4">
-          <ConversionFunnels />
-        </TabsContent>
+          <TabsContent value="funnels" className="space-y-4">
+            <ConversionFunnels />
+          </TabsContent>
 
-        <TabsContent value="heatmaps" className="space-y-4">
-          <PageAnalytics showHeatmaps />
-        </TabsContent>
+          <TabsContent value="heatmaps" className="space-y-4">
+            <PageAnalytics showHeatmaps />
+          </TabsContent>
 
-        <TabsContent value="abtests" className="space-y-4">
-          <ABTestingResults />
-        </TabsContent>
+          <TabsContent value="abtests" className="space-y-4">
+            <ABTestingResults />
+          </TabsContent>
 
-        <TabsContent value="events" className="space-y-4">
-          <EventsExplorer />
-        </TabsContent>
-      </Tabs>
-    </DashboardLayout>
+          <TabsContent value="events" className="space-y-4">
+            <EventsExplorer />
+          </TabsContent>
+        </Tabs>
+      </DashboardLayout>
+    </PageLayout>
   )
 }
 
