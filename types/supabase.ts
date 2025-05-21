@@ -135,6 +135,43 @@ export interface Database {
           },
         ]
       }
+      email_events: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          event_type: string
+          email_id: string
+          created_at: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email: string
+          event_type: string
+          email_id: string
+          created_at?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string
+          event_type?: string
+          email_id?: string
+          created_at?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           id: string
