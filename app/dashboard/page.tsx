@@ -1,29 +1,19 @@
-"use client"
-
-import { useAuth } from "@/hooks/use-auth"
-import { Button } from "@/components/ui/button"
+import { getServerUser } from "@/lib/server-auth"
+import { getUserProfile } from "@/app/actions/profile"
+import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { SignOutButton } from "@/components/auth/sign-out-button"
 
-export default function DashboardPage(): JSX.Element {
-  const { user, signOut, loading } = useAuth()
-  const router = useRouter()
+export default async function DashboardPage() {
+  const user = await getServerUser()
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login")
-    }
-  }, [user, loading, router])
-
-  if (loading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+  if (!user) {
+    redirect("/login")
   }
+
+  const profile = await getUserProfile()
 
   return (
     <div className="container py-12">
@@ -38,13 +28,21 @@ export default function DashboardPage(): JSX.Element {
               <p>
                 <strong>Email:</strong> {user.email}
               </p>
+              {profile?.full_name && (
+                <p>
+                  <strong>Name:</strong> {profile.full_name}
+                </p>
+              )}
               <p>
                 <strong>User ID:</strong> {user.id}
               </p>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => signOut()}>Sign out</Button>
+          <CardFooter className="flex justify-between">
+            <Button asChild>
+              <Link href="/profile">Edit Profile</Link>
+            </Button>
+            <SignOutButton />
           </CardFooter>
         </Card>
       </div>
