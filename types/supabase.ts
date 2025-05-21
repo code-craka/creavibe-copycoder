@@ -32,6 +32,79 @@ export interface Database {
           marketing_consent?: boolean
         }
       }
+      projects: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          description: string | null
+          user_id: string
+          status: string
+          thumbnail_url: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title: string
+          description?: string | null
+          user_id: string
+          status?: string
+          thumbnail_url?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title?: string
+          description?: string | null
+          user_id?: string
+          status?: string
+          thumbnail_url?: string | null
+          tags?: string[] | null
+        }
+      }
+      generations: {
+        Row: {
+          id: string
+          created_at: string
+          project_id: string
+          user_id: string
+          prompt: string
+          result: string
+          model: string
+          format: string
+          status: string
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          project_id: string
+          user_id: string
+          prompt: string
+          result: string
+          model: string
+          format?: string
+          status?: string
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          project_id?: string
+          user_id?: string
+          prompt?: string
+          result?: string
+          model?: string
+          format?: string
+          status?: string
+          metadata?: Json | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
