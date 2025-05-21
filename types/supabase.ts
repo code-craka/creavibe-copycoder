@@ -15,6 +15,10 @@ export interface Database {
           plan: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
+          email_notifications: boolean
+          product_updates: boolean
+          security_alerts: boolean
+          marketing_emails: boolean
         }
         Insert: {
           id: string
@@ -27,6 +31,10 @@ export interface Database {
           plan?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          email_notifications?: boolean
+          product_updates?: boolean
+          security_alerts?: boolean
+          marketing_emails?: boolean
         }
         Update: {
           id?: string
@@ -39,6 +47,10 @@ export interface Database {
           plan?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
+          email_notifications?: boolean
+          product_updates?: boolean
+          security_alerts?: boolean
+          marketing_emails?: boolean
         }
         Relationships: [
           {
