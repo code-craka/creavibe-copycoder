@@ -19,3 +19,6 @@ export function createClient() {
     },
   })
 }
+
+// Re-export createServerClient for direct imports
+export { createServerClient } from "@supabase/ssr"
