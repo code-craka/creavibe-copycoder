@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 
-export function SkipToContent() {
-  const [mounted, setMounted] = useState(false)
+export function SkipToContent(): JSX.Element | null {
+  const [mounted, setMounted] = useState<boolean>(false)
 
   useEffect(() => {
     setMounted(true)
