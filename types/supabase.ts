@@ -40,6 +40,74 @@ export interface Database {
           },
         ]
       }
+      api_tokens: {
+        Row: {
+          id: string
+          user_id: string
+          token: string
+          name: string
+          last_used_at: string | null
+          created_at: string
+          revoked: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          token: string
+          name: string
+          last_used_at?: string | null
+          created_at?: string
+          revoked?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          token?: string
+          name?: string
+          last_used_at?: string | null
+          created_at?: string
+          revoked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_tokens_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_usage: {
+        Row: {
+          id: string
+          token_id: string
+          endpoint: string
+          status: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          token_id: string
+          endpoint: string
+          status: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          token_id?: string
+          endpoint?: string
+          status?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_token_id_fkey"
+            columns: ["token_id"]
+            referencedRelation: "api_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
