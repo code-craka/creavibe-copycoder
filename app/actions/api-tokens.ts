@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerComponentClient, createAdminClient } from "@/lib/supabase/clients"
+import { createServerComponentClient, createAdminClient, safeQuery } from "@/lib/supabase/clients"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
 import type { ApiToken, ApiUsage, ApiUsageMetrics, ApiEndpointMetrics, ApiStatusMetrics } from "@/types/api-tokens"
@@ -16,40 +16,47 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Get the current user with safe query handling
+    const { data: authData, error: authError } = await safeQuery(() => supabase.auth.getUser())
 
-    if (userError || !user) {
-      return { success: false, error: "User not authenticated" }
+    if (authError || !authData?.user) {
+      return { success: false, error: authError || "User not authenticated" }
+    }
+
+    const user = authData.user
+
+    // Validate input
+    if (!name || name.trim().length === 0) {
+      return { success: false, error: "Token name is required" }
     }
 
     // Generate a new token
     const token = generateToken()
 
-    // Insert the token into the database
-    const { data, error } = await supabase
-      .from("api_tokens")
-      .insert({
-        user_id: user.id,
-        token,
-        name,
-        created_at: new Date().toISOString(),
-        revoked: false,
-      })
-      .select()
-      .single()
+    // Insert the token into the database with safe query handling
+    const { data, error } = await safeQuery(() =>
+      supabase
+        .from("api_tokens")
+        .insert({
+          user_id: user.id,
+          token,
+          name: name.trim(),
+          created_at: new Date().toISOString(),
+          revoked: false,
+        })
+        .select()
+        .single(),
+    )
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     revalidatePath("/api-keys")
     return { success: true, token: data as ApiToken }
-  } catch (error) {
-    return { success: false, error: "Failed to create API token" }
+  } catch (error: any) {
+    console.error("Error creating API token:", error)
+    return { success: false, error: error.message || "Failed to create API token" }
   }
 }
 
@@ -59,104 +66,106 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Get the current user with safe query handling
+    const { data: authData, error: authError } = await safeQuery(() => supabase.auth.getUser())
 
-    if (userError || !user) {
-      return { success: false, error: "User not authenticated" }
+    if (authError || !authData?.user) {
+      return { success: false, error: authError || "User not authenticated" }
     }
 
-    // Get all tokens for the user
+    // Get all tokens for the user with safe query handling
     // RLS policy will ensure only the user's tokens are returned
-    const { data, error } = await supabase.from("api_tokens").select("*").order("created_at", { ascending: false })
+    const { data, error } = await safeQuery(() =>
+      supabase.from("api_tokens").select("*").order("created_at", { ascending: false }),
+    )
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     return { success: true, tokens: data as ApiToken[] }
-  } catch (error) {
-    return { success: false, error: "Failed to fetch API tokens" }
+  } catch (error: any) {
+    console.error("Error fetching API tokens:", error)
+    return { success: false, error: error.message || "Failed to fetch API tokens" }
   }
 }
 
 // Revoke an API token
 export async function revokeApiToken(tokenId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    // Input validation
+    if (!tokenId) {
+      return { success: false, error: "Token ID is required" }
+    }
+
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Get the current user with safe query handling
+    const { data: authData, error: authError } = await safeQuery(() => supabase.auth.getUser())
 
-    if (userError || !user) {
-      return { success: false, error: "User not authenticated" }
+    if (authError || !authData?.user) {
+      return { success: false, error: authError || "User not authenticated" }
     }
 
-    // Update the token to be revoked
+    // Update the token to be revoked with safe query handling
     // RLS policy will ensure only the user's tokens can be updated
-    const { error } = await supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId)
+    const { error } = await safeQuery(() => supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId))
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     revalidatePath("/api-keys")
     return { success: true }
-  } catch (error) {
-    return { success: false, error: "Failed to revoke API token" }
+  } catch (error: any) {
+    console.error("Error revoking API token:", error)
+    return { success: false, error: error.message || "Failed to revoke API token" }
   }
 }
 
 // Get API usage for a specific token
 export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
+    // Input validation
+    if (!tokenId) {
+      return { success: false, error: "Token ID is required" }
+    }
+
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Get the current user with safe query handling
+    const { data: authData, error: authError } = await safeQuery(() => supabase.auth.getUser())
 
-    if (userError || !user) {
-      return { success: false, error: "User not authenticated" }
+    if (authError || !authData?.user) {
+      return { success: false, error: authError || "User not authenticated" }
     }
 
-    // Get the token to verify ownership
+    // Get the token to verify ownership with safe query handling
     // RLS policy will ensure only the user's tokens are returned
-    const { data: tokenData, error: tokenError } = await supabase
-      .from("api_tokens")
-      .select("*")
-      .eq("id", tokenId)
-      .single()
+    const { data: tokenData, error: tokenError } = await safeQuery(() =>
+      supabase.from("api_tokens").select("*").eq("id", tokenId).single(),
+    )
 
     if (tokenError || !tokenData) {
-      return { success: false, error: "Token not found or not owned by user" }
+      return { success: false, error: tokenError || "Token not found or not owned by user" }
     }
 
-    // Get usage data for the token
+    // Get usage data for the token with safe query handling
     // RLS policy will ensure only usage for the user's tokens is returned
-    const { data, error } = await supabase
-      .from("api_usage")
-      .select("*")
-      .eq("token_id", tokenId)
-      .order("created_at", { ascending: false })
+    const { data, error } = await safeQuery(() =>
+      supabase.from("api_usage").select("*").eq("token_id", tokenId).order("created_at", { ascending: false }),
+    )
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     return { success: true, usage: data as ApiUsage[] }
-  } catch (error) {
-    return { success: false, error: "Failed to fetch API usage" }
+  } catch (error: any) {
+    console.error("Error fetching API usage:", error)
+    return { success: false, error: error.message || "Failed to fetch API usage" }
   }
 }
 
@@ -172,29 +181,33 @@ export async function getApiUsageMetrics(
   error?: string
 }> {
   try {
+    // Input validation
+    if (!tokenId) {
+      return { success: false, error: "Token ID is required" }
+    }
+
+    if (isNaN(days) || days <= 0) {
+      days = 30 // Default to 30 days if invalid
+    }
+
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
-    // Get the current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+    // Get the current user with safe query handling
+    const { data: authData, error: authError } = await safeQuery(() => supabase.auth.getUser())
 
-    if (userError || !user) {
-      return { success: false, error: "User not authenticated" }
+    if (authError || !authData?.user) {
+      return { success: false, error: authError || "User not authenticated" }
     }
 
-    // Get the token to verify ownership
+    // Get the token to verify ownership with safe query handling
     // RLS policy will ensure only the user's tokens are returned
-    const { data: tokenData, error: tokenError } = await supabase
-      .from("api_tokens")
-      .select("*")
-      .eq("id", tokenId)
-      .single()
+    const { data: tokenData, error: tokenError } = await safeQuery(() =>
+      supabase.from("api_tokens").select("*").eq("id", tokenId).single(),
+    )
 
     if (tokenError || !tokenData) {
-      return { success: false, error: "Token not found or not owned by user" }
+      return { success: false, error: tokenError || "Token not found or not owned by user" }
     }
 
     // Calculate the date range
@@ -202,17 +215,19 @@ export async function getApiUsageMetrics(
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
-    // Get usage data for the token within the date range
+    // Get usage data for the token within the date range with safe query handling
     // RLS policy will ensure only usage for the user's tokens is returned
-    const { data, error } = await supabase
-      .from("api_usage")
-      .select("*")
-      .eq("token_id", tokenId)
-      .gte("created_at", startDate.toISOString())
-      .lte("created_at", endDate.toISOString())
+    const { data, error } = await safeQuery(() =>
+      supabase
+        .from("api_usage")
+        .select("*")
+        .eq("token_id", tokenId)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString()),
+    )
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     // Process data for daily metrics
@@ -260,8 +275,9 @@ export async function getApiUsageMetrics(
       endpointMetrics,
       statusMetrics,
     }
-  } catch (error) {
-    return { success: false, error: "Failed to fetch API usage metrics" }
+  } catch (error: any) {
+    console.error("Error fetching API usage metrics:", error)
+    return { success: false, error: error.message || "Failed to fetch API usage metrics" }
   }
 }
 
@@ -273,14 +289,17 @@ export async function resetApiUsageData(): Promise<{ success: boolean; error?: s
     const supabase = createAdminClient()
 
     // This operation requires admin privileges
-    const { error } = await supabase.from("api_usage").delete().neq("id", "placeholder") // Delete all records
+    const { error } = await safeQuery(
+      () => supabase.from("api_usage").delete().neq("id", "placeholder"), // Delete all records
+    )
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error }
     }
 
     return { success: true }
-  } catch (error) {
-    return { success: false, error: "Failed to reset API usage data" }
+  } catch (error: any) {
+    console.error("Error resetting API usage data:", error)
+    return { success: false, error: error.message || "Failed to reset API usage data" }
   }
 }
