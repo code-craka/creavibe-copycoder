@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
 import type { ApiToken, ApiUsage, ApiUsageMetrics, ApiEndpointMetrics, ApiStatusMetrics } from "@/types/api-tokens"
 import type { User } from "@supabase/supabase-js"
+import type { Database } from "@/types/supabase"
 
 // Generate a secure API token
 function generateToken(): string {
@@ -60,18 +61,17 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
     // Generate a new token
     const token = generateToken()
 
+    // Create the token data with the correct type
+    const tokenData: Database["public"]["Tables"]["api_tokens"]["Insert"] = {
+      user_id: user.id,
+      token,
+      name: name.trim(),
+      created_at: new Date().toISOString(),
+      revoked: false,
+    }
+
     // Insert the token into the database
-    const { data, error } = await supabase
-      .from("api_tokens")
-      .insert({
-        user_id: user.id,
-        token,
-        name: name.trim(),
-        created_at: new Date().toISOString(),
-        revoked: false,
-      })
-      .select()
-      .single()
+    const { data, error } = await supabase.from("api_tokens").insert(tokenData).select().single()
 
     if (error) {
       console.error("Database error creating API token:", error)
@@ -131,9 +131,14 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
     // Use the server component client which respects RLS policies
     const supabase = createServerComponentClient()
 
+    // Create the update data with the correct type
+    const updateData: Database["public"]["Tables"]["api_tokens"]["Update"] = {
+      revoked: true,
+    }
+
     // Update the token to be revoked
     // RLS policy will ensure only the user's tokens can be updated
-    const { error } = await supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId)
+    const { error } = await supabase.from("api_tokens").update(updateData).eq("id", tokenId)
 
     if (error) {
       console.error("Database error revoking API token:", error)
