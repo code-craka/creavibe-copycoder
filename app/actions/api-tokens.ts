@@ -1,11 +1,9 @@
 "use server"
 
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createServerComponentClient, createAdminClient } from "@/lib/supabase/clients"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
 import type { ApiToken, ApiUsage, ApiUsageMetrics, ApiEndpointMetrics, ApiStatusMetrics } from "@/types/api-tokens"
-import type { Database } from "@/types/supabase"
 
 // Generate a secure API token
 function generateToken(): string {
@@ -15,24 +13,8 @@ function generateToken(): string {
 // Create a new API token
 export async function createApiToken(name: string): Promise<{ success: boolean; token?: ApiToken; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      },
-    )
+    // Use the server component client which respects RLS policies
+    const supabase = createServerComponentClient()
 
     // Get the current user
     const {
@@ -74,24 +56,8 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
 // Get all API tokens for the current user
 export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiToken[]; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      },
-    )
+    // Use the server component client which respects RLS policies
+    const supabase = createServerComponentClient()
 
     // Get the current user
     const {
@@ -104,11 +70,8 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
     }
 
     // Get all tokens for the user
-    const { data, error } = await supabase
-      .from("api_tokens")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+    // RLS policy will ensure only the user's tokens are returned
+    const { data, error } = await supabase.from("api_tokens").select("*").order("created_at", { ascending: false })
 
     if (error) {
       return { success: false, error: error.message }
@@ -123,24 +86,8 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
 // Revoke an API token
 export async function revokeApiToken(tokenId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      },
-    )
+    // Use the server component client which respects RLS policies
+    const supabase = createServerComponentClient()
 
     // Get the current user
     const {
@@ -153,11 +100,8 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
     }
 
     // Update the token to be revoked
-    const { error } = await supabase
-      .from("api_tokens")
-      .update({ revoked: true })
-      .eq("id", tokenId)
-      .eq("user_id", user.id)
+    // RLS policy will ensure only the user's tokens can be updated
+    const { error } = await supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId)
 
     if (error) {
       return { success: false, error: error.message }
@@ -173,24 +117,8 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 // Get API usage for a specific token
 export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      },
-    )
+    // Use the server component client which respects RLS policies
+    const supabase = createServerComponentClient()
 
     // Get the current user
     const {
@@ -203,11 +131,11 @@ export async function getApiUsage(tokenId: string): Promise<{ success: boolean; 
     }
 
     // Get the token to verify ownership
+    // RLS policy will ensure only the user's tokens are returned
     const { data: tokenData, error: tokenError } = await supabase
       .from("api_tokens")
       .select("*")
       .eq("id", tokenId)
-      .eq("user_id", user.id)
       .single()
 
     if (tokenError || !tokenData) {
@@ -215,6 +143,7 @@ export async function getApiUsage(tokenId: string): Promise<{ success: boolean; 
     }
 
     // Get usage data for the token
+    // RLS policy will ensure only usage for the user's tokens is returned
     const { data, error } = await supabase
       .from("api_usage")
       .select("*")
@@ -243,24 +172,8 @@ export async function getApiUsageMetrics(
   error?: string
 }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
-          },
-        },
-      },
-    )
+    // Use the server component client which respects RLS policies
+    const supabase = createServerComponentClient()
 
     // Get the current user
     const {
@@ -273,11 +186,11 @@ export async function getApiUsageMetrics(
     }
 
     // Get the token to verify ownership
+    // RLS policy will ensure only the user's tokens are returned
     const { data: tokenData, error: tokenError } = await supabase
       .from("api_tokens")
       .select("*")
       .eq("id", tokenId)
-      .eq("user_id", user.id)
       .single()
 
     if (tokenError || !tokenData) {
@@ -290,6 +203,7 @@ export async function getApiUsageMetrics(
     startDate.setDate(startDate.getDate() - days)
 
     // Get usage data for the token within the date range
+    // RLS policy will ensure only usage for the user's tokens is returned
     const { data, error } = await supabase
       .from("api_usage")
       .select("*")
@@ -348,5 +262,25 @@ export async function getApiUsageMetrics(
     }
   } catch (error) {
     return { success: false, error: "Failed to fetch API usage metrics" }
+  }
+}
+
+// Admin function to reset API usage data
+// This requires admin privileges
+export async function resetApiUsageData(): Promise<{ success: boolean; error?: string }> {
+  try {
+    // Use the admin client which bypasses RLS
+    const supabase = createAdminClient()
+
+    // This operation requires admin privileges
+    const { error } = await supabase.from("api_usage").delete().neq("id", "placeholder") // Delete all records
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: "Failed to reset API usage data" }
   }
 }
