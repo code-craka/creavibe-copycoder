@@ -1,9 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createVercelService } from "@/lib/services/vercel-service"
 import { createClient } from "@/lib/supabase/server"
+import { rateLimit } from "@/lib/middleware/security"
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    if (!rateLimit(request, 10, 15 * 60 * 1000)) {
+      // 10 requests per 15 minutes
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 })
+    }
+
     // Verify user authentication
     const supabase = createClient()
     const {
@@ -45,6 +52,7 @@ export async function POST(request: NextRequest) {
       vercel_deployment_id: deployment.id,
       status: "pending",
       branch,
+      created_at: new Date().toISOString(),
     })
 
     return NextResponse.json({
@@ -60,4 +68,17 @@ export async function POST(request: NextRequest) {
     console.error("Deployment trigger error:", error)
     return NextResponse.json({ error: "Failed to trigger deployment" }, { status: 500 })
   }
+}
+
+// Ensure only POST requests are allowed
+export async function GET() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 })
+}
+
+export async function PUT() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 })
+}
+
+export async function DELETE() {
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 })
 }

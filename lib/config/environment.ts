@@ -24,19 +24,13 @@ export const serverConfig = {
 
   // Redis secrets
   redis: {
-    url: process.env.KV_REST_API_URL!,
-    token: process.env.KV_REST_API_TOKEN!,
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
   },
 
   // Vercel automation (CRITICAL - never expose)
   vercel: {
     automationBypassSecret: process.env.VERCEL_AUTOMATION_BYPASS_SECRET!,
-  },
-
-  // Custom application secrets
-  custom: {
-    key: process.env.CUSTOM_KEY!,
-    vercelSecret: process.env.NEXT_PUBLIC_VERCEL_SECRET!, // Note: This should NOT be NEXT_PUBLIC_ if it's sensitive
   },
 } as const
 
@@ -59,18 +53,7 @@ export const clientConfig = {
   app: {
     url: process.env.NEXT_PUBLIC_APP_URL!,
   },
-
-  // Only non-sensitive Vercel configuration
-  vercel: {
-    // Only include non-sensitive Vercel data here
-    projectId: process.env.NEXT_PUBLIC_VERCEL_PROJECT_ID,
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV || "development",
-  },
 } as const
-
-// Type definitions for better TypeScript support
-export type ServerConfig = typeof serverConfig
-export type ClientConfig = typeof clientConfig
 
 // Validation function to ensure all required environment variables are present
 export function validateEnvironmentVariables() {
@@ -82,8 +65,6 @@ export function validateEnvironmentVariables() {
     "STRIPE_WEBHOOK_SECRET",
     "UPSTASH_REDIS_REST_URL",
     "UPSTASH_REDIS_REST_TOKEN",
-    "VERCEL_AUTOMATION_BYPASS_SECRET",
-    "CUSTOM_KEY",
   ]
 
   const requiredClientVars = [
@@ -119,75 +100,14 @@ export function validateEnvironmentVariables() {
 }
 
 // Runtime check to prevent server secrets from being accessed on client
-export function getServerConfig(): ServerConfig {
+export function getServerConfig() {
   if (typeof window !== "undefined") {
-    throw new Error(
-      "🚨 SECURITY VIOLATION: Server configuration cannot be accessed on the client side. " +
-        "This prevents sensitive environment variables from being exposed to users.",
-    )
+    throw new Error("Server configuration cannot be accessed on the client side")
   }
-
-  // Additional validation in production
-  if (process.env.NODE_ENV === "production") {
-    validateEnvironmentVariables()
-  }
-
   return serverConfig
 }
 
 // Safe client configuration getter
-export function getClientConfig(): ClientConfig {
+export function getClientConfig() {
   return clientConfig
-}
-
-// Utility function to check if we're on the server
-export function isServer(): boolean {
-  return typeof window === "undefined"
-}
-
-// Utility function to safely access environment variables
-export function getEnvVar(key: string, fallback?: string): string {
-  const value = process.env[key]
-  if (!value && !fallback) {
-    throw new Error(`Environment variable ${key} is required but not set`)
-  }
-  return value || fallback!
-}
-
-// Security audit function to check for potential exposures
-export function auditEnvironmentSecurity() {
-  if (typeof window !== "undefined") {
-    console.warn("🔍 Environment security audit should only run on the server")
-    return
-  }
-
-  const potentiallyExposedVars: string[] = []
-  const secureVars = [
-    "VERCEL_AUTOMATION_BYPASS_SECRET",
-    "CUSTOM_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "STRIPE_SECRET_KEY",
-    "RESEND_API_KEY",
-  ]
-
-  // Check if any secure variables are accidentally prefixed with NEXT_PUBLIC_
-  Object.keys(process.env).forEach((key) => {
-    if (key.startsWith("NEXT_PUBLIC_")) {
-      const baseKey = key.replace("NEXT_PUBLIC_", "")
-      if (secureVars.some((secureVar) => secureVar.includes(baseKey))) {
-        potentiallyExposedVars.push(key)
-      }
-    }
-  })
-
-  if (potentiallyExposedVars.length > 0) {
-    console.error("🚨 SECURITY ALERT: Potentially exposed sensitive variables:", potentiallyExposedVars)
-  } else {
-    console.log("✅ Environment security audit passed")
-  }
-
-  return {
-    secure: potentiallyExposedVars.length === 0,
-    exposedVars: potentiallyExposedVars,
-  }
 }
