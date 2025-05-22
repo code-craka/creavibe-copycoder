@@ -1,10 +1,11 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
 import type { ApiToken, ApiUsage, ApiUsageMetrics, ApiEndpointMetrics, ApiStatusMetrics } from "@/types/api-tokens"
+import type { Database } from "@/types/supabase"
 
 // Generate a secure API token
 function generateToken(): string {
@@ -15,7 +16,23 @@ function generateToken(): string {
 export async function createApiToken(name: string): Promise<{ success: boolean; token?: ApiToken; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: "", ...options })
+          },
+        },
+      },
+    )
 
     // Get the current user
     const {
@@ -58,7 +75,23 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
 export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiToken[]; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: "", ...options })
+          },
+        },
+      },
+    )
 
     // Get the current user
     const {
@@ -91,7 +124,23 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
 export async function revokeApiToken(tokenId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: "", ...options })
+          },
+        },
+      },
+    )
 
     // Get the current user
     const {
@@ -125,7 +174,23 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: "", ...options })
+          },
+        },
+      },
+    )
 
     // Get the current user
     const {
@@ -179,7 +244,23 @@ export async function getApiUsageMetrics(
 }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: "", ...options })
+          },
+        },
+      },
+    )
 
     // Get the current user
     const {
