@@ -24,7 +24,7 @@ commands:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
+            - v1-dependencies-{{ checksum "package.json" }}
             - v1-dependencies-
       - run:
           name: Setup pnpm without global installation
@@ -36,17 +36,18 @@ commands:
             chmod +x .circleci/.bin/pnpm
             # Add to PATH
             echo 'export PATH=$PWD/.circleci/.bin:$PATH' >> $BASH_ENV
+            source $BASH_ENV
             # Verify installation
-            .circleci/.bin/pnpm --version
+            pnpm --version
       - run:
           name: Install dependencies
           command: |
-            pnpm install --frozen-lockfile
+            pnpm install --no-frozen-lockfile
       - save_cache:
           paths:
             - node_modules
             - .pnpm-store
-          key: v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
+          key: v1-dependencies-{{ checksum "package.json" }}
 
   setup-vercel-cli:
     description: "Setup Vercel CLI"
