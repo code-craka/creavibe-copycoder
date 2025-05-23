@@ -72,9 +72,8 @@ jobs:
     steps:
       - setup-dependencies
       - run:
-          name: Run linting
-          command: |
-            pnpm lint
+          name: Run linting (CI-safe)
+          command: pnpm exec eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0
 
   type-check:
     executor: node-executor
@@ -91,8 +90,7 @@ jobs:
       - setup-dependencies
       - run:
           name: Run unit tests
-          command: |
-            pnpm test
+          command: pnpm exec jest --ci
       - store_test_results:
           path: ./test-results
       - store_artifacts:
@@ -107,12 +105,10 @@ jobs:
       - browser-tools/install-firefox
       - run:
           name: Install Playwright browsers
-          command: |
-            pnpm exec playwright install --with-deps
+          command: pnpm exec playwright install --with-deps
       - run:
           name: Run E2E tests
-          command: |
-            pnpm test:e2e
+          command: pnpm exec playwright test
       - store_test_results:
           path: ./test-results
       - store_artifacts:
