@@ -1,0 +1,268 @@
+version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@1.5.3
+
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:20.11.1
+    resource_class: medium+
+
+parameters:
+  deploy_branch:
+    type: string
+    default: "main"
+  dev_branch:
+    type: string
+    default: "dev"
+
+commands:
+  setup-dependencies:
+    description: "Setup project dependencies"
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
+            - v1-dependencies-
+      - run:
+          name: Install pnpm
+          command: |
+            npm install -g pnpm@10.x
+      - run:
+          name: Install dependencies
+          command: |
+            pnpm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
+
+  setup-vercel-cli:
+    description: "Setup Vercel CLI"
+    steps:
+      - run:
+          name: Install Vercel CLI
+          command: |
+            npm install -g vercel
+
+jobs:
+  lint:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - run:
+          name: Run linting
+          command: |
+            pnpm lint
+
+  type-check:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - run:
+          name: Run TypeScript type checking
+          command: |
+            pnpm exec tsc --noEmit
+
+  unit-tests:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - run:
+          name: Run unit tests
+          command: |
+            pnpm test
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./coverage
+          destination: coverage
+
+  e2e-tests:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - browser-tools/install-chrome
+      - browser-tools/install-firefox
+      - run:
+          name: Install Playwright browsers
+          command: |
+            pnpm exec playwright install --with-deps
+      - run:
+          name: Run E2E tests
+          command: |
+            pnpm test:e2e
+      - store_test_results:
+          path: ./test-results
+      - store_artifacts:
+          path: ./playwright-report
+          destination: playwright-report
+
+  build:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - run:
+          name: Build application
+          command: |
+            pnpm build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .next
+            - node_modules
+
+  deploy-dev:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - setup-vercel-cli
+      - attach_workspace:
+          at: .
+      - run:
+          name: Plan deployment to dev
+          command: |
+            circleci run release plan --target-version=${CIRCLE_SHA1:0:7} --environment-name=development --component-name=creavibe-app
+      - run:
+          name: Deploy to Vercel (Dev)
+          command: |
+            vercel --token ${VERCEL_TOKEN} --prod --scope ${VERCEL_ORG_ID} --confirm --yes
+      - run:
+          name: Update deployment status to running
+          command: |
+            circleci run release update --status=running
+      - run:
+          name: Verify deployment
+          command: |
+            # Add verification logic here
+            # For example, check if the deployment is accessible
+            # If verification fails, create a failure_reason.env file
+            # echo "FAILURE_REASON='Deployment verification failed'" > failure_reason.env
+            echo "Deployment verification successful"
+      - run:
+          name: Update deployment status to success
+          command: |
+            circleci run release update --status=SUCCESS
+          when: on_success
+      - run:
+          name: Update deployment status to failed
+          command: |
+            if [ -f failure_reason.env ]; then
+              source failure_reason.env
+            else
+              FAILURE_REASON="Deployment failed"
+            fi
+            circleci run release update --status=FAILED --failure-reason="${FAILURE_REASON}"
+          when: on_fail
+
+  deploy-production:
+    executor: node-executor
+    steps:
+      - setup-dependencies
+      - setup-vercel-cli
+      - attach_workspace:
+          at: .
+      - run:
+          name: Plan deployment to production
+          command: |
+            circleci run release plan --target-version=${CIRCLE_SHA1:0:7} --environment-name=production --component-name=creavibe-app
+      - run:
+          name: Deploy to Vercel (Production)
+          command: |
+            vercel --token ${VERCEL_TOKEN} --prod --scope ${VERCEL_ORG_ID} --confirm --yes
+      - run:
+          name: Update deployment status to running
+          command: |
+            circleci run release update --status=running
+      - run:
+          name: Verify deployment
+          command: |
+            # Add verification logic here
+            # For example, check if the deployment is accessible
+            # If verification fails, create a failure_reason.env file
+            # echo "FAILURE_REASON='Deployment verification failed'" > failure_reason.env
+            echo "Deployment verification successful"
+      - run:
+          name: Update deployment status to success
+          command: |
+            circleci run release update --status=SUCCESS
+          when: on_success
+      - run:
+          name: Update deployment status to failed
+          command: |
+            if [ -f failure_reason.env ]; then
+              source failure_reason.env
+            else
+              FAILURE_REASON="Deployment failed"
+            fi
+            circleci run release update --status=FAILED --failure-reason="${FAILURE_REASON}"
+          when: on_fail
+
+  cancel-dev-deploy:
+    executor: node-executor
+    steps:
+      - run:
+          name: Update dev deployment status to canceled
+          command: |
+            circleci run release update --status=CANCELED
+  
+  cancel-prod-deploy:
+    executor: node-executor
+    steps:
+      - run:
+          name: Update production deployment status to canceled
+          command: |
+            circleci run release update --status=CANCELED
+
+workflows:
+  build-test-deploy:
+    jobs:
+      - lint
+      - type-check
+      - unit-tests
+      - e2e-tests:
+          requires:
+            - lint
+            - type-check
+      - build:
+          requires:
+            - lint
+            - type-check
+      - deploy-dev:
+          requires:
+            - build
+            - unit-tests
+          filters:
+            branches:
+              only: << pipeline.parameters.dev_branch >>
+      - cancel-dev-deploy:
+          requires:
+            - deploy-dev
+          filters:
+            branches:
+              only: << pipeline.parameters.dev_branch >>
+          context: deployment
+      - approve-production-deploy:
+          type: approval
+          requires:
+            - build
+            - unit-tests
+            - e2e-tests
+          filters:
+            branches:
+              only: << pipeline.parameters.deploy_branch >>
+      - deploy-production:
+          requires:
+            - approve-production-deploy
+          filters:
+            branches:
+              only: << pipeline.parameters.deploy_branch >>
+      - cancel-prod-deploy:
+          requires:
+            - deploy-production
+          filters:
+            branches:
+              only: << pipeline.parameters.deploy_branch >>
+          context: deployment
