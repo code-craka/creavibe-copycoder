@@ -2,60 +2,67 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import type { Database } from "@/types/supabase"
+import { updateSession } from "@/utils/supabase/middleware"
 
 export async function middleware(req: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  })
-
+  // Get the response from the updateSession function which handles auth refresh
+  let response = await updateSession(req)
+  
+  // Check if we have a session by creating a new Supabase client
+  // We need to do this after updateSession to ensure we're using the refreshed token
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value
+        getAll() {
+          try {
+            return req.cookies.getAll()
+          } catch (error) {
+            console.error('Error getting cookies in main middleware:', error)
+            return []
+          }
         },
-        set(name: string, value: string, options: any) {
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: any) {
-          req.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              req.cookies.set({
+                name,
+                value,
+                ...options,
+              })
+            })
+            
+            // Create a new response to avoid modifying the one from updateSession
+            const newResponse = NextResponse.next({
+              request: {
+                headers: req.headers,
+              },
+            })
+            
+            // Copy cookies from the original response
+            response.cookies.getAll().forEach(cookie => {
+              newResponse.cookies.set(cookie)
+            })
+            
+            // Set the new cookies
+            cookiesToSet.forEach(({ name, value, options }) => {
+              newResponse.cookies.set({
+                name,
+                value,
+                ...options,
+              })
+            })
+            
+            response = newResponse
+          } catch (error) {
+            console.error('Error setting cookies in main middleware:', error)
+          }
         },
       },
     },
   )
-
+  
   // Check if we have a session
   const {
     data: { user },
@@ -89,7 +96,7 @@ export async function middleware(req: NextRequest) {
   `
 
   // Add security headers
-  const securityHeaders = {
+  const securityHeaders: Record<string, string> = {
     "Content-Security-Policy": ContentSecurityPolicy.replace(/\s{2,}/g, " ").trim(),
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

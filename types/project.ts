@@ -2,11 +2,11 @@ export type Project = {
   id: string
   title: string
   description?: string
-  created_at: string
-  updated_at: string
-  user_id: string
+  createdAt: string
+  updatedAt: string
+  userId: string
   status?: "draft" | "published" | "archived"
-  thumbnail_url?: string
+  imageUrl?: string | null
   tags?: string[]
   collaborators?: string[]
 }

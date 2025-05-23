@@ -55,6 +55,44 @@ export class VercelService {
     }
   }
 
+  async getDeployment(deploymentId: string) {
+    try {
+      const response = await fetch(`https://api.vercel.com/v1/deployments/${deploymentId}`, {
+        headers: {
+          Authorization: `Bearer ${this.config.vercel.automationBypassSecret}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Vercel API error: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error("Failed to get deployment:", error)
+      throw error
+    }
+  }
+
+  async getProject(projectId: string) {
+    try {
+      const response = await fetch(`https://api.vercel.com/v1/projects/${projectId}`, {
+        headers: {
+          Authorization: `Bearer ${this.config.vercel.automationBypassSecret}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Vercel API error: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error("Failed to get project:", error)
+      throw error
+    }
+  }
+  
   async getProjectInfo(projectId: string) {
     try {
       const response = await fetch(`https://api.vercel.com/v1/projects/${projectId}`, {
@@ -89,6 +127,48 @@ export class VercelService {
       return await response.json()
     } catch (error) {
       console.error("Failed to list deployments:", error)
+      throw error
+    }
+  }
+
+  async updateProject(projectId: string, data: any) {
+    try {
+      const response = await fetch(`https://api.vercel.com/v1/projects/${projectId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${this.config.vercel.automationBypassSecret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Vercel API error: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error("Failed to update project:", error)
+      throw error
+    }
+  }
+
+  async deleteProject(projectId: string) {
+    try {
+      const response = await fetch(`https://api.vercel.com/v1/projects/${projectId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${this.config.vercel.automationBypassSecret}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Vercel API error: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error("Failed to delete project:", error)
       throw error
     }
   }

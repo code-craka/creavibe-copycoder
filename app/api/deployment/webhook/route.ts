@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const config = getServerConfig()
 
     // Verify the request is from Vercel using the automation bypass secret
-    const headersList = headers()
+    const headersList = await headers()
     const vercelBypassSecret = headersList.get("x-vercel-bypass-secret")
 
     if (!vercelBypassSecret || vercelBypassSecret !== config.vercel.automationBypassSecret) {

@@ -40,9 +40,13 @@ export function PostHogProvider({ children, apiKey, apiHost }: PostHogProviderPr
     }
 
     return () => {
-      if (typeof window !== "undefined" && posthog && typeof posthog.cleanup === "function") {
-        // Use cleanup instead of shutdown
-        posthog.cleanup()
+      if (typeof window !== "undefined" && posthog) {
+        // Use type assertion to handle the cleanup method
+        // This is necessary because the TypeScript definitions might be outdated
+        const posthogInstance = posthog as unknown as { cleanup?: () => void }
+        if (typeof posthogInstance.cleanup === "function") {
+          posthogInstance.cleanup()
+        }
       }
     }
   }, [apiKey, apiHost])

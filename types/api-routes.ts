@@ -2,19 +2,19 @@ import type { NextRequest } from "next/server"
 
 // Base types for API route handlers
 export interface ApiRouteContext<T extends Record<string, string> = Record<string, string>> {
-  params: Promise<T>
+  params: T
 }
 
 // Specific parameter types for different routes
-export interface DeploymentParams {
+export interface DeploymentParams extends Record<string, string> {
   deploymentId: string
 }
 
-export interface ProjectParams {
+export interface ProjectParams extends Record<string, string> {
   projectId: string
 }
 
-export interface UserParams {
+export interface UserParams extends Record<string, string> {
   userId: string
 }
 

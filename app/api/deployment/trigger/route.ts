@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createVercelService } from "@/lib/services/vercel-service"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { rateLimit } from "@/lib/middleware/security"
 
 export async function POST(request: NextRequest) {
@@ -49,10 +49,12 @@ export async function POST(request: NextRequest) {
     await supabase.from("deployments").insert({
       project_id: projectId,
       user_id: user.id,
-      vercel_deployment_id: deployment.id,
+      deployment_id: deployment.id,
       status: "pending",
-      branch,
+      url: deployment.url || '',
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      metadata: { branch }
     })
 
     return NextResponse.json({

@@ -1,27 +1,33 @@
-import { createClient } from "@supabase/supabase-js"
-import { createServerClient } from "@supabase/ssr"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import type { Database } from "@/types/supabase"
+import type { Database } from "../../types/supabase"
+import type { CookieOptions } from "@supabase/ssr"
+
+type Cookie = {
+  name: string
+  value: string
+  options?: CookieOptions
+}
 
 // Environment variable validation
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string
 if (!SUPABASE_URL) {
   throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined")
 }
 
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
 if (!SUPABASE_ANON_KEY) {
   throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not defined")
 }
 
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-// We don't throw here because this is only needed for admin operations
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined
 
 // Cookie configuration
-const getCookieOptions = () => ({
+const getCookieOptions = (): Partial<CookieOptions> => ({
   domain: process.env.COOKIE_DOMAIN || undefined,
   path: "/",
-  sameSite: "lax" as const,
+  sameSite: "lax",
   secure: process.env.NODE_ENV === "production",
   httpOnly: true,
 })
@@ -38,36 +44,47 @@ export function createAdminClient() {
     )
   }
 
-  const cookieStore = cookies()
   const cookieOptions = getCookieOptions()
 
-  return createServerClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
+  return createSupabaseServerClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY,
+    {
+      cookies: {
+        getAll: () => {
+          try {
+            const cookieStore = cookies() as any
+            return Object.fromEntries(
+              [...cookieStore.getAll()].map((cookie) => [cookie.name, cookie.value])
+            )
+          } catch (error) {
+            console.error('Error getting cookies:', error)
+            return {}
+          }
+        },
+        setAll: (cookiesList: Cookie[]) => {
+          try {
+            const cookieStore = cookies() as any
+            cookiesList.forEach((cookie: Cookie) => {
+              cookieStore.set({
+                name: cookie.name,
+                value: cookie.value,
+                ...cookieOptions,
+                ...cookie.options
+              })
+            })
+          } catch (error) {
+            console.error('Error setting cookies:', error)
+          }
+        },
       },
-      set(name: string, value: string, options: any) {
-        cookieStore.set({
-          name,
-          value,
-          ...cookieOptions,
-          ...options,
-        })
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
-      remove(name: string, options: any) {
-        cookieStore.set({
-          name,
-          value: "",
-          ...cookieOptions,
-          ...options,
-          maxAge: 0,
-        })
-      },
-    },
-    auth: {
-      persistSession: true,
-    },
-  })
+    }
+  )
 }
 
 /**
@@ -76,36 +93,52 @@ export function createAdminClient() {
  * Recommended for most server-side operations
  */
 export function createServerComponentClient() {
-  const cookieStore = cookies()
   const cookieOptions = getCookieOptions()
 
-  return createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value
+  // Ensure we have a valid ANON key
+  if (!SUPABASE_ANON_KEY) {
+    throw new Error("SUPABASE_ANON_KEY is not defined or is empty")
+  }
+
+  return createSupabaseServerClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll: () => {
+          try {
+            const cookieStore = cookies() as any
+            return Object.fromEntries(
+              [...cookieStore.getAll()].map((cookie) => [cookie.name, cookie.value])
+            )
+          } catch (error) {
+            console.error('Error getting cookies:', error)
+            return {}
+          }
+        },
+        setAll: (cookiesList: Cookie[]) => {
+          try {
+            const cookieStore = cookies() as any
+            cookiesList.forEach((cookie: Cookie) => {
+              cookieStore.set({
+                name: cookie.name,
+                value: cookie.value,
+                ...cookieOptions,
+                ...cookie.options
+              })
+            })
+          } catch (error) {
+            console.error('Error setting cookies:', error)
+          }
+        },
       },
-      set(name: string, value: string, options: any) {
-        cookieStore.set({
-          name,
-          value,
-          ...cookieOptions,
-          ...options,
-        })
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
-      remove(name: string, options: any) {
-        cookieStore.set({
-          name,
-          value: "",
-          ...cookieOptions,
-          ...options,
-          maxAge: 0,
-        })
-      },
-    },
-    auth: {
-      persistSession: true,
-    },
-  })
+    }
+  )
 }
 
 /**
@@ -113,14 +146,21 @@ export function createServerComponentClient() {
  * Uses the anon key and respects RLS policies
  */
 export function createBrowserComponentClient() {
-  return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      storageKey: "supabase-auth",
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  })
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase URL or Anon Key is not defined')
+  }
+  
+  return createSupabaseClient<Database>(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    }
+  )
 }
 
 // Operation types that require admin privileges

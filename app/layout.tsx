@@ -9,6 +9,9 @@ import { Toaster } from "sonner"
 import { Analytics } from "@/components/analytics/analytics"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { AnalyticsContextProvider } from "@/components/providers/analytics-provider"
+import { AvatarBucketInitializer } from "@/components/providers/avatar-bucket-initializer"
+import { MigrationsInitializer } from "@/components/providers/migrations-initializer"
+import { SessionProvider } from "@/components/providers/session-provider"
 import { Suspense } from "react"
 import { OrganizationLD, WebsiteLD } from "@/components/seo/json-ld"
 
@@ -104,8 +107,9 @@ export default function RootLayout({
       <head />
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AnalyticsProvider>
-            <AnalyticsContextProvider>
+          <SessionProvider>
+            <AnalyticsProvider>
+              <AnalyticsContextProvider>
               <div className="flex flex-col min-h-screen">
                 <Navbar />
                 <Suspense fallback={null}>
@@ -115,11 +119,15 @@ export default function RootLayout({
               </div>
               <Analytics />
               <Toaster position="top-right" expand={true} richColors closeButton />
+              {/* Initialize avatar bucket */}
+              <AvatarBucketInitializer />
+              <MigrationsInitializer />
               {/* JSON-LD Structured Data */}
               <OrganizationLD />
               <WebsiteLD />
             </AnalyticsContextProvider>
           </AnalyticsProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

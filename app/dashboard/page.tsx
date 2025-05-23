@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import React, { Suspense } from "react"
 import { ProjectGrid } from "@/components/dashboard/project-grid"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
@@ -6,9 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { AddProjectDialog } from "@/components/dashboard/add-project-dialog"
 import { getProjects, getUserProfile } from "@/app/actions/projects"
-import { createClient } from "@/lib/supabase/server"
+import { createServerComponentClient } from "@/utils/supabase/clients"
 import { redirect } from "next/navigation"
-import { UserAvatar } from "@/components/dashboard/user-avatar"
+import { UserProfileMenu } from "@/components/dashboard/user-profile-menu"
 import { PageLayout } from "@/components/layout/page-layout"
 import type { Metadata } from "next"
 
@@ -20,8 +20,13 @@ export const metadata: Metadata = {
   description: "Manage and organize all your creative projects",
 }
 
-async function ProjectsContent() {
-  const { data: projects, error } = await getProjects()
+function ProjectsContent() {
+  // Use React.use to handle the promise in a way that works with Suspense
+  const projectsPromise = getProjects();
+  const { data: projects, error } = React.use(projectsPromise);
+  
+  // Ensure projects match our updated Project type
+  const typedProjects = projects || [];
 
   if (error) {
     return (
@@ -63,30 +68,34 @@ function ProjectsSkeleton() {
 }
 
 export default async function DashboardPage() {
-  const supabase = createClient()
+  // Create a new Supabase client for this server component
+  const supabase = createServerComponentClient()
 
+  // Use getUser instead of getSession for better security
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     redirect("/login")
   }
 
   const profile = await getUserProfile()
-  const userName = profile?.full_name || session.user.email?.split("@")[0] || "there"
+  const userName = profile?.full_name || user.email?.split("@")[0] || "there"
 
   return (
     <PageLayout>
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div className="flex items-center gap-3">
-            <UserAvatar user={session.user} profileData={profile} />
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight" id="dashboard-heading">
-                Welcome, {userName}
-              </h1>
-              <p className="text-muted-foreground mt-1">Manage and organize all your creative projects</p>
+            <div className="flex items-center gap-3">
+              <UserProfileMenu user={user} profileData={profile} />
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight" id="dashboard-heading">
+                  Welcome, {userName}
+                </h1>
+                <p className="text-muted-foreground mt-1">Manage and organize all your creative projects</p>
+              </div>
             </div>
           </div>
 

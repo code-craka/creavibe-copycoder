@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { validateVercelWebhook } from "@/lib/services/vercel-service"
-import { createClient } from "@/lib/supabase/server"
+import { createServerComponentClient } from "@/utils/supabase/clients"
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,46 +46,46 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleDeploymentCreated(payload: any) {
-  const supabase = createClient()
+  const supabase = createServerComponentClient()
 
   await supabase
     .from("deployments")
     .update({
       status: "building",
-      vercel_url: payload.deployment.url,
+      url: payload.deployment.url,
       updated_at: new Date().toISOString(),
     })
-    .eq("vercel_deployment_id", payload.deployment.id)
+    .eq("deployment_id", payload.deployment.id)
 }
 
 async function handleDeploymentReady(payload: any) {
-  const supabase = createClient()
+  const supabase = createServerComponentClient()
 
   await supabase
     .from("deployments")
     .update({
       status: "ready",
-      vercel_url: payload.deployment.url,
+      url: payload.deployment.url,
       updated_at: new Date().toISOString(),
     })
-    .eq("vercel_deployment_id", payload.deployment.id)
+    .eq("deployment_id", payload.deployment.id)
 }
 
 async function handleDeploymentError(payload: any) {
-  const supabase = createClient()
+  const supabase = createServerComponentClient()
 
   await supabase
     .from("deployments")
     .update({
       status: "error",
-      error_message: payload.deployment.errorMessage,
+      metadata: { error_message: payload.deployment.errorMessage },
       updated_at: new Date().toISOString(),
     })
-    .eq("vercel_deployment_id", payload.deployment.id)
+    .eq("deployment_id", payload.deployment.id)
 }
 
 async function handleDeploymentCanceled(payload: any) {
-  const supabase = createClient()
+  const supabase = createServerComponentClient()
 
   await supabase
     .from("deployments")
@@ -93,7 +93,7 @@ async function handleDeploymentCanceled(payload: any) {
       status: "canceled",
       updated_at: new Date().toISOString(),
     })
-    .eq("vercel_deployment_id", payload.deployment.id)
+    .eq("deployment_id", payload.deployment.id)
 }
 
 // Only allow POST requests

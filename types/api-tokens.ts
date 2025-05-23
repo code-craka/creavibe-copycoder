@@ -5,6 +5,7 @@ export interface ApiToken {
   name: string
   created_at: string
   revoked: boolean
+  last_used_at?: string | null
 }
 
 export interface ApiUsage {

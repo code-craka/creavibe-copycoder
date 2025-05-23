@@ -13,14 +13,26 @@ export function TokenList() {
     loading,
     error,
     refetch,
-  } = useSupabaseQuery(
-    (supabase) => supabase.from("api_tokens").select("*").order("created_at", { ascending: false }),
+  } = useSupabaseQuery<ApiToken[]>(
+    async (supabase) => {
+      const result = await supabase.from("api_tokens").select("*").order("created_at", { ascending: false })
+      return { 
+        data: result.data as ApiToken[] | null, 
+        error: result.error as Error | null 
+      }
+    },
     [],
   )
 
   // Use the mutation hook for revoking tokens
-  const { mutate: revokeToken, loading: revoking } = useSupabaseMutation((supabase, tokenId: string) =>
-    supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId),
+  const { mutate: revokeToken, loading: revoking } = useSupabaseMutation<any, string>(
+    async (supabase, tokenId: string) => {
+      const result = await supabase.from("api_tokens").update({ revoked: true }).eq("id", tokenId)
+      return { 
+        data: result.data, 
+        error: result.error as Error | null 
+      }
+    },
   )
 
   const handleRevoke = async (tokenId: string) => {
@@ -34,7 +46,7 @@ export function TokenList() {
 
   if (loading) return <div>Loading tokens...</div>
   if (error) return <div>Error loading tokens: {error.message}</div>
-  if (!tokens || tokens.length === 0) return <div>No tokens found</div>
+  if (!tokens || (Array.isArray(tokens) && tokens.length === 0)) return <div>No tokens found</div>
 
   return (
     <div className="space-y-4">

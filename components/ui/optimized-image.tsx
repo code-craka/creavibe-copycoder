@@ -42,7 +42,11 @@ export function OptimizedImage({
           setError(true)
         }}
         src={error ? fallbackSrc : props.src}
-        className={cn("transition-opacity duration-300", isLoading ? "opacity-0" : "opacity-100", props.className)}
+        // Extract className from props to avoid passing it directly to NextImage
+        style={{
+          opacity: isLoading ? 0 : 1,
+          transition: "opacity 300ms"
+        }}
       />
     </div>
   )

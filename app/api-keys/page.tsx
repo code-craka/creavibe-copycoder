@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerComponentClient } from "@/utils/supabase/clients"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getApiTokens, createApiToken, revokeApiToken, getApiUsage, getApiUsageMetrics } from "../actions/api-tokens"
@@ -40,8 +40,7 @@ function ApiKeysLoading() {
 }
 
 export default async function ApiKeysPage() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createServerComponentClient()
 
   // Check if user is authenticated
   const {
@@ -61,14 +60,14 @@ export default async function ApiKeysPage() {
 
   if (tokens && tokens.length > 0) {
     const activeToken = tokens.find((token) => !token.revoked) || tokens[0]
-    const { usage } = await getApiUsage(activeToken.id)
-    const metrics = await getApiUsageMetrics(activeToken.id)
+    const { usage } = await getApiUsage(activeToken.id, 50)
+    const { dailyMetrics = [], endpointMetrics = [], statusMetrics = [] } = await getApiUsageMetrics(activeToken.id, 30) // Provide the default days parameter (30 days)
 
     usageData = usage || []
     usageMetrics = {
-      dailyMetrics: metrics.dailyMetrics || [],
-      endpointMetrics: metrics.endpointMetrics || [],
-      statusMetrics: metrics.statusMetrics || [],
+      dailyMetrics,
+      endpointMetrics,
+      statusMetrics,
     }
   }
 

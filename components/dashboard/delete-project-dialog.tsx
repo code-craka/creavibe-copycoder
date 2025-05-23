@@ -27,7 +27,11 @@ export function DeleteProjectDialog({ isOpen, onClose, projectId, projectTitle }
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      const { error } = await deleteProject(projectId)
+      // Create a FormData object to pass to the deleteProject function
+      const formData = new FormData()
+      formData.append('id', projectId)
+      
+      const { error } = await deleteProject(formData)
 
       if (error) {
         toast({

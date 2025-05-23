@@ -145,12 +145,106 @@ export interface Database {
           },
         ]
       }
+      deployments: {
+        Row: {
+          id: string
+          user_id: string
+          project_id: string | null
+          deployment_id: string
+          url: string
+          status: string
+          created_at: string
+          updated_at: string
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          project_id?: string | null
+          deployment_id: string
+          url: string
+          status: string
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          project_id?: string | null
+          deployment_id?: string
+          url?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deployments_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deployments_project_id_fkey"
+            columns: ["project_id"]
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      theme_preferences: {
+        Row: {
+          id: string
+          user_id: string
+          theme: string
+          accent_color: string
+          font_size: string
+          high_contrast: boolean
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          theme: string
+          accent_color: string
+          font_size: string
+          high_contrast: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          theme?: string
+          accent_color?: string
+          font_size?: string
+          high_contrast?: boolean
+          created_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theme_preferences_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      execute_sql: {
+        Args: {
+          sql: string
+        }
+        Returns: unknown
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,4 +1,4 @@
-import { toast as sonnerToast, type ToastT } from "sonner"
+import { toast as sonnerToast, type ToastT, type Action } from "sonner"
 
 type ToastType = "success" | "error" | "info" | "warning"
 
@@ -20,20 +20,20 @@ export function toast(
   { description, duration = 5000, action, cancel }: ToastOptions = {},
   type: ToastType = "info",
 ) {
-  const options: ToastT = {
+  const options: Partial<ToastT> = {
     description,
     duration,
     action: action
       ? {
           label: action.label,
-          onClick: action.onClick,
-        }
+          onClick: (event) => action.onClick(), // Wrap with proper event handler signature
+        } as Action
       : undefined,
     cancel: cancel
       ? {
           label: cancel.label,
-          onClick: cancel.onClick,
-        }
+          onClick: cancel.onClick ? (event) => cancel.onClick!() : undefined, // Wrap with proper event handler signature
+        } as Action
       : undefined,
   }
 

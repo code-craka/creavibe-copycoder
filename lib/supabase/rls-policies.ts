@@ -1,123 +1,143 @@
 import { createAdminClient } from "./clients"
 
 /**
- * Helper function to create RLS policies for a table
- * @param tableName The name of the table to create policies for
- * @param policies Array of policy configurations
+ * Functions for managing Row Level Security (RLS) policies in Supabase
+ * These functions help create, update, and apply RLS policies to tables
  */
-export async function createRLSPolicies(
-  tableName: string,
-  policies: {
-    name: string
-    definition: string
-    check: string
-    using?: string
-    operation: "SELECT" | "INSERT" | "UPDATE" | "DELETE" | "ALL"
-  }[],
-) {
+
+/**
+ * Apply RLS policies to a table
+ * @param tableName The name of the table to apply policies to
+ * @param enableRLS Whether to enable RLS on the table
+ */
+export async function applyRLSToTable(tableName: string, enableRLS = true) {
   const supabase = createAdminClient()
-
-  // Enable RLS on the table
-  await supabase.rpc("enable_rls", { table_name: tableName })
-
-  // Create each policy
-  for (const policy of policies) {
-    const { name, definition, check, using, operation } = policy
-
-    // Construct the SQL statement
-    let sql = `CREATE POLICY "${name}" ON "${tableName}" FOR ${operation}`
-
-    if (using) {
-      sql += ` USING (${using})`
-    }
-
-    if (check) {
-      sql += ` WITH CHECK (${check})`
-    }
-
-    // Execute the SQL
-    await supabase.rpc("execute_sql", { sql })
+  
+  // Enable or disable RLS on the table
+  const rlsStatus = enableRLS ? "ENABLE" : "DISABLE"
+  const { error } = await supabase.rpc("execute_sql", {
+    sql: `ALTER TABLE "${tableName}" ${rlsStatus} ROW LEVEL SECURITY;`
+  })
+  
+  if (error) {
+    console.error(`Error applying RLS to table ${tableName}:`, error)
+    throw new Error(`Failed to apply RLS to table ${tableName}: ${error.message}`)
   }
-
-  return { success: true }
+  
+  return { success: true, tableName, rlsEnabled: enableRLS }
 }
 
 /**
- * Example function to set up RLS policies for the profiles table
+ * Create an RLS policy for a table
+ * @param options Policy options
  */
-export async function setupProfilesRLSPolicies() {
-  return createRLSPolicies("profiles", [
-    {
-      name: "Users can view their own profile",
-      definition: "Allow users to view their own profile",
-      using: "auth.uid() = id",
-      operation: "SELECT",
-    },
-    {
-      name: "Users can update their own profile",
-      definition: "Allow users to update their own profile",
-      using: "auth.uid() = id",
-      check: "auth.uid() = id",
-      operation: "UPDATE",
-    },
-    {
-      name: "Public profiles are viewable by everyone",
-      definition: "Allow public profiles to be viewed by anyone",
-      using: "public = true",
-      operation: "SELECT",
-    },
-  ])
+export async function createRLSPolicy(options: {
+  tableName: string
+  policyName: string
+  operation: "ALL" | "SELECT" | "INSERT" | "UPDATE" | "DELETE"
+  using?: string
+  check?: string
+  withCheck?: string
+}) {
+  const { tableName, policyName, operation, using, check, withCheck } = options
+  const supabase = createAdminClient()
+  
+  let sql = `CREATE POLICY "${policyName}" ON "${tableName}" FOR ${operation}`
+  
+  if (using) {
+    sql += ` USING (${using})`
+  }
+  
+  if (check) {
+    sql += ` WITH CHECK (${check})`
+  } else if (withCheck) {
+    sql += ` WITH CHECK (${withCheck})`
+  }
+  
+  sql += ";"
+  
+  const { error } = await supabase.rpc("execute_sql", { sql })
+  
+  if (error) {
+    console.error(`Error creating RLS policy ${policyName} on table ${tableName}:`, error)
+    throw new Error(`Failed to create RLS policy: ${error.message}`)
+  }
+  
+  return { success: true, tableName, policyName, operation }
 }
 
 /**
- * Example function to set up RLS policies for the api_tokens table
+ * Drop an RLS policy from a table
+ * @param tableName The name of the table
+ * @param policyName The name of the policy to drop
  */
-export async function setupApiTokensRLSPolicies() {
-  return createRLSPolicies("api_tokens", [
-    {
-      name: "Users can view their own tokens",
-      definition: "Allow users to view their own API tokens",
-      using: "auth.uid() = user_id",
-      operation: "SELECT",
-    },
-    {
-      name: "Users can create their own tokens",
-      definition: "Allow users to create their own API tokens",
-      check: "auth.uid() = user_id",
-      operation: "INSERT",
-    },
-    {
-      name: "Users can update their own tokens",
-      definition: "Allow users to update their own API tokens",
-      using: "auth.uid() = user_id",
-      check: "auth.uid() = user_id",
-      operation: "UPDATE",
-    },
-    {
-      name: "Users can delete their own tokens",
-      definition: "Allow users to delete their own API tokens",
-      using: "auth.uid() = user_id",
-      operation: "DELETE",
-    },
-  ])
+export async function dropRLSPolicy(tableName: string, policyName: string) {
+  const supabase = createAdminClient()
+  
+  const { error } = await supabase.rpc("execute_sql", {
+    sql: `DROP POLICY IF EXISTS "${policyName}" ON "${tableName}";`
+  })
+  
+  if (error) {
+    console.error(`Error dropping RLS policy ${policyName} from table ${tableName}:`, error)
+    throw new Error(`Failed to drop RLS policy: ${error.message}`)
+  }
+  
+  return { success: true, tableName, policyName }
 }
 
 /**
- * Example function to set up RLS policies for the api_usage table
+ * Apply common RLS policies to a user-owned table
+ * This creates standard policies for user data:
+ * - Users can read their own data
+ * - Users can insert their own data
+ * - Users can update their own data
+ * - Users can delete their own data
+ * - Admins can do everything
+ * 
+ * @param tableName The name of the table
+ * @param userIdColumn The column containing the user ID (default: 'user_id')
  */
-export async function setupApiUsageRLSPolicies() {
-  return createRLSPolicies("api_usage", [
+export async function applyUserOwnedTablePolicies(tableName: string, userIdColumn = "user_id") {
+  // Enable RLS on the table
+  await applyRLSToTable(tableName, true)
+  
+  // Create policies
+  const policies = [
+    // Select policy - users can read their own data
     {
-      name: "Users can view usage for their own tokens",
-      definition: "Allow users to view API usage for their own tokens",
-      using: "auth.uid() IN (SELECT user_id FROM api_tokens WHERE id = token_id)",
-      operation: "SELECT",
+      tableName,
+      policyName: `${tableName}_select_policy`,
+      operation: "SELECT" as const,
+      using: `(${userIdColumn} = auth.uid()) OR (auth.jwt() ->> 'role' = 'admin')`
     },
+    // Insert policy - users can insert their own data
     {
-      name: "System can insert usage records",
-      definition: "Allow the system to insert API usage records",
-      check: "true", // This would typically be restricted by application logic
-      operation: "INSERT",
+      tableName,
+      policyName: `${tableName}_insert_policy`,
+      operation: "INSERT" as const,
+      withCheck: `(${userIdColumn} = auth.uid()) OR (auth.jwt() ->> 'role' = 'admin')`
     },
-  ])
+    // Update policy - users can update their own data
+    {
+      tableName,
+      policyName: `${tableName}_update_policy`,
+      operation: "UPDATE" as const,
+      using: `(${userIdColumn} = auth.uid()) OR (auth.jwt() ->> 'role' = 'admin')`
+    },
+    // Delete policy - users can delete their own data
+    {
+      tableName,
+      policyName: `${tableName}_delete_policy`,
+      operation: "DELETE" as const,
+      using: `(${userIdColumn} = auth.uid()) OR (auth.jwt() ->> 'role' = 'admin')`
+    }
+  ]
+  
+  // Apply all policies
+  for (const policy of policies) {
+    await createRLSPolicy(policy)
+  }
+  
+  return { success: true, tableName, policiesApplied: policies.length }
 }

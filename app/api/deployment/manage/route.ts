@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createVercelService } from "@/lib/services/vercel-service"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { rateLimit } from "@/lib/middleware/security"
 
 export async function GET(request: NextRequest) {
@@ -88,7 +88,7 @@ export async function DELETE(request: NextRequest) {
     const { data: deployment, error: deploymentError } = await supabase
       .from("deployments")
       .select("*")
-      .eq("vercel_deployment_id", deploymentId)
+      .eq("deployment_id", deploymentId)
       .eq("user_id", user.id)
       .single()
 
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest) {
     const result = await vercelService.cancelDeployment(deploymentId)
 
     // Update local database
-    await supabase.from("deployments").update({ status: "canceled" }).eq("vercel_deployment_id", deploymentId)
+    await supabase.from("deployments").update({ status: "canceled" }).eq("deployment_id", deploymentId)
 
     return NextResponse.json({
       success: true,

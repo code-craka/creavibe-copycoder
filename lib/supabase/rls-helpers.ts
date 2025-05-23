@@ -1,54 +1,79 @@
 import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/types/supabase"
+import type { Database } from "../../types/supabase"
 
-// Create a Supabase client with RLS enabled
-export const createRLSClient = (supabaseUrl: string, supabaseKey: string, userId?: string) => {
-  const client = createClient<Database>(supabaseUrl, supabaseKey)
+/**
+ * Helper functions for working with Row Level Security (RLS) in Supabase
+ * These functions help implement and test RLS policies
+ */
 
-  // If userId is provided, set the user context for RLS policies
-  if (userId) {
-    // This sets the user ID for RLS policies
-    client.auth.setAuth(userId)
-  }
-
-  return client
+/**
+ * Get the current authenticated user's ID
+ * This is useful in RLS policies to restrict access to user's own data
+ */
+export function getCurrentUserId() {
+  return "auth.uid()"
 }
 
-// Helper function to validate that a user can only access their own data
-export const validateUserAccess = async (
-  supabase: any,
-  table: string,
-  recordId: string,
-  userId: string,
-): Promise<boolean> => {
-  const { data, error } = await supabase.from(table).select("user_id").eq("id", recordId).single()
-
-  if (error || !data) {
-    return false
-  }
-
-  return data.user_id === userId
+/**
+ * Check if the current user has a specific role
+ * @param role The role to check for
+ */
+export function hasRole(role: string) {
+  return `(SELECT role FROM auth.users WHERE id = auth.uid()) = '${role}'`
 }
 
-// Example RLS policy for projects table
-/*
-CREATE POLICY "Users can only view their own projects" 
-ON projects
-FOR SELECT
-USING (auth.uid() = user_id);
+/**
+ * Check if the current user has any of the specified roles
+ * @param roles Array of roles to check
+ */
+export function hasAnyRole(roles: string[]) {
+  const roleList = roles.map(role => `'${role}'`).join(", ")
+  return `(SELECT role FROM auth.users WHERE id = auth.uid()) IN (${roleList})`
+}
 
-CREATE POLICY "Users can only insert their own projects" 
-ON projects
-FOR INSERT
-WITH CHECK (auth.uid() = user_id);
+/**
+ * Check if a record belongs to the current user
+ * @param userIdColumn The column containing the user ID
+ */
+export function isOwner(userIdColumn: string) {
+  return `${userIdColumn} = auth.uid()`
+}
 
-CREATE POLICY "Users can only update their own projects" 
-ON projects
-FOR UPDATE
-USING (auth.uid() = user_id);
+/**
+ * Check if the current timestamp is within a specified range
+ * @param startColumn Column containing the start timestamp
+ * @param endColumn Column containing the end timestamp
+ */
+export function isWithinTimeRange(startColumn: string, endColumn: string) {
+  return `${startColumn} <= now() AND (${endColumn} IS NULL OR ${endColumn} >= now())`
+}
 
-CREATE POLICY "Users can only delete their own projects" 
-ON projects
-FOR DELETE
-USING (auth.uid() = user_id);
-*/
+/**
+ * Create a test client that impersonates a specific user
+ * Useful for testing RLS policies
+ * @param userId The user ID to impersonate
+ */
+export function createTestClientAsUser(userId: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY as string
+  
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error("Supabase URL or Service Role Key not defined")
+  }
+  
+  return createClient<Database>(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        "Authorization": `Bearer ${supabaseKey}`,
+        "X-Client-Info": `rls-test-client`,
+      },
+    },
+  }).auth.setSession({
+    access_token: userId,
+    refresh_token: ""
+  })
+}

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createVercelService } from "@/lib/services/vercel-service"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ projectId: string }> }) {
   try {

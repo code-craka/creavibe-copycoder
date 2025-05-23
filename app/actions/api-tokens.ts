@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerComponentClient, createAdminClient } from "@/lib/supabase/clients"
+import { createServerComponentClient, createAdminClient } from "@/utils/supabase/clients"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
 import type { ApiToken, ApiUsage, ApiUsageMetrics, ApiEndpointMetrics, ApiStatusMetrics } from "@/types/api-tokens"

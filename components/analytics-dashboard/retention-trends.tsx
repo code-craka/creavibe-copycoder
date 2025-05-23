@@ -66,7 +66,16 @@ export function RetentionTrends() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} tickFormatter={(value) => value.split(" ")[0]} />
                 <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, ""]} labelFormatter={(label) => `${label}`} />
+                <Tooltip 
+                  formatter={(value) => {
+                    // Check if value is a number before using toFixed
+                    const formattedValue = typeof value === 'number' 
+                      ? `${value.toFixed(1)}%` 
+                      : `${value}%`;
+                    return [formattedValue, ""];
+                  }} 
+                  labelFormatter={(label) => `${label}`} 
+                />
                 <Legend />
                 <Line type="monotone" dataKey="day1" name="Day 1 Retention" stroke="#8884d8" activeDot={{ r: 8 }} />
                 <Line type="monotone" dataKey="day7" name="Day 7 Retention" stroke="#82ca9d" />
