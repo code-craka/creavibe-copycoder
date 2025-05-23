@@ -27,9 +27,14 @@ commands:
             - v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
             - v1-dependencies-
       - run:
-          name: Install pnpm
+          name: Install pnpm using corepack
           command: |
-            npm install -g pnpm@10.x
+            # Enable corepack for pnpm management
+            corepack enable
+            # Install specific pnpm version without global install
+            npm install -g corepack
+            corepack prepare pnpm@8.15.4 --activate
+            pnpm --version
       - run:
           name: Install dependencies
           command: |
@@ -45,7 +50,9 @@ commands:
       - run:
           name: Install Vercel CLI
           command: |
-            npm install -g vercel
+            # Install Vercel CLI locally and add to PATH
+            npm install --no-save vercel
+            echo 'export PATH=$PATH:$(npm bin)' >> $BASH_ENV
 
 jobs:
   lint:
