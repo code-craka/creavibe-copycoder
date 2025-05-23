@@ -27,32 +27,43 @@ commands:
             - v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
             - v1-dependencies-
       - run:
-          name: Install pnpm using corepack
+          name: Setup pnpm without global installation
           command: |
-            # Enable corepack for pnpm management
-            corepack enable
-            # Install specific pnpm version without global install
-            npm install -g corepack
-            corepack prepare pnpm@8.15.4 --activate
-            pnpm --version
+            # Create a local bin directory
+            mkdir -p .circleci/.bin
+            # Download specific pnpm version directly
+            curl -L https://github.com/pnpm/pnpm/releases/download/v8.15.4/pnpm-linuxstatic-x64 -o .circleci/.bin/pnpm
+            chmod +x .circleci/.bin/pnpm
+            # Add to PATH
+            echo 'export PATH=$PWD/.circleci/.bin:$PATH' >> $BASH_ENV
+            # Verify installation
+            .circleci/.bin/pnpm --version
       - run:
           name: Install dependencies
           command: |
-            pnpm install
+            pnpm install --frozen-lockfile
       - save_cache:
           paths:
             - node_modules
+            - .pnpm-store
           key: v1-dependencies-{{ checksum "pnpm-lock.yaml" }}
 
   setup-vercel-cli:
     description: "Setup Vercel CLI"
     steps:
       - run:
-          name: Install Vercel CLI
+          name: Install Vercel CLI locally
           command: |
-            # Install Vercel CLI locally and add to PATH
-            npm install --no-save vercel
-            echo 'export PATH=$PATH:$(npm bin)' >> $BASH_ENV
+            # Install Vercel CLI in a local directory
+            mkdir -p .circleci/vercel
+            cd .circleci/vercel
+            npm init -y
+            npm install vercel --no-package-lock
+            # Add to PATH
+            echo 'export PATH=$PWD/node_modules/.bin:$PATH' >> $BASH_ENV
+            # Verify installation
+            cd ../..
+            npx vercel --version
 
 jobs:
   lint:
