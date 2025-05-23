@@ -62,7 +62,8 @@
     "next": "15.2.4",
     "next-themes": "latest",
     "playwright-core": "latest",
-    "posthog-js": "latest",
+    "postcss": "^8.4.31",
+    "posthog-js": "^1.57.2",
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
@@ -75,7 +76,7 @@
     "tailwindcss-animate": "^1.0.7",
     "uuid": "latest",
     "vaul": "^0.9.6",
-    "zod": "latest"
+    "zod": "^3.22.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "latest",
@@ -93,7 +94,7 @@
     "eslint": "^9.27.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "postcss": "^8",
+    "postcss": "^8.4.31",
     "supabase": "^2.23.4",
     "tailwindcss": "^3.4.17",
     "ts-jest": "^29.3.4",
