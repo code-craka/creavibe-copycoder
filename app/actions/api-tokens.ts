@@ -71,7 +71,7 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
     }
 
     // Insert the token into the database
-    const { data, error } = await supabase.from("api_tokens").insert(tokenData).select().single()
+    const { data, error } = await supabase.from("api_tokens").insert([tokenData] as any).select().single()
 
     if (error) {
       console.error("Database error creating API token:", error)
@@ -79,7 +79,7 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
     }
 
     revalidatePath("/api-keys")
-    return { success: true, token: data as ApiToken }
+    return { success: true, token: data as unknown as ApiToken }
   } catch (error: any) {
     console.error("Unexpected error creating API token:", error)
     return { success: false, error: "An unexpected error occurred. Please try again." }
@@ -107,7 +107,7 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
       return { success: false, error: "Failed to fetch API tokens. Please try again." }
     }
 
-    return { success: true, tokens: (data as ApiToken[]) || [] }
+    return { success: true, tokens: (data as unknown as ApiToken[]) || [] }
   } catch (error: any) {
     console.error("Unexpected error fetching API tokens:", error)
     return { success: false, error: "An unexpected error occurred. Please try again." }
@@ -138,7 +138,10 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 
     // Update the token to be revoked
     // RLS policy will ensure only the user's tokens can be updated
-    const { error } = await supabase.from("api_tokens").update(updateData).eq("id", tokenId)
+    const { error } = await supabase
+      .from("api_tokens")
+      .update(updateData as Database["public"]["Tables"]["api_tokens"]["Update"])
+      .eq("id", tokenId)
 
     if (error) {
       console.error("Database error revoking API token:", error)
@@ -154,11 +157,15 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 }
 
 // Get API usage for a specific token
-export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
+export async function getApiUsage(tokenId: string, limit: number): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
     // Input validation
     if (!tokenId || typeof tokenId !== "string") {
       return { success: false, error: "Valid token ID is required" }
+    }
+
+    if (!Number.isInteger(limit) || limit <= 0) {
+      return { success: false, error: "Valid limit is required" }
     }
 
     // Get authenticated user
@@ -175,8 +182,8 @@ export async function getApiUsage(tokenId: string): Promise<{ success: boolean; 
     const { data: tokenData, error: tokenError } = await supabase
       .from("api_tokens")
       .select("*")
-      .eq("id", tokenId)
-      .single()
+      .eq("id", tokenId as any)
+      .single() as any
 
     if (tokenError) {
       console.error("Database error fetching token:", tokenError)
@@ -192,15 +199,16 @@ export async function getApiUsage(tokenId: string): Promise<{ success: boolean; 
     const { data, error } = await supabase
       .from("api_usage")
       .select("*")
-      .eq("token_id", tokenId)
+      .eq("token_id", tokenId as any)
       .order("created_at", { ascending: false })
+      .limit(limit) as any
 
     if (error) {
       console.error("Database error fetching API usage:", error)
       return { success: false, error: "Failed to fetch API usage. Please try again." }
     }
 
-    return { success: true, usage: (data as ApiUsage[]) || [] }
+    return { success: true, usage: data as unknown as ApiUsage[] }
   } catch (error: any) {
     console.error("Unexpected error fetching API usage:", error)
     return { success: false, error: "An unexpected error occurred. Please try again." }
@@ -264,7 +272,7 @@ export async function getApiUsageMetrics(
     const { data, error } = await supabase
       .from("api_usage")
       .select("*")
-      .eq("token_id", tokenId)
+      .eq("token_id", tokenId as any)
       .gte("created_at", startDate.toISOString())
       .lte("created_at", endDate.toISOString())
 
@@ -273,7 +281,7 @@ export async function getApiUsageMetrics(
       return { success: false, error: "Failed to fetch API usage metrics. Please try again." }
     }
 
-    const usageData = (data as ApiUsage[]) || []
+    const usageData = (data as unknown as ApiUsage[]) || []
 
     // Process data for daily metrics
     const dailyUsage = new Map<string, number>()
@@ -335,7 +343,7 @@ export async function resetApiUsageData(): Promise<{ success: boolean; error?: s
     const supabase = createAdminClient()
 
     // This operation requires admin privileges
-    const { error } = await supabase.from("api_usage").delete().neq("id", "placeholder") // Delete all records
+    const { error } = await supabase.from("api_usage").delete().neq("id" as any, "placeholder") // Delete all records
 
     if (error) {
       console.error("Database error resetting API usage data:", error)
