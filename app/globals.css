@@ -56,76 +56,8 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /* Enhanced focus styles */
-  :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
-  }
-
-  /* Smooth transitions for hover states */
-  a,
-  button,
-  input,
-  select,
-  textarea {
-    @apply transition-colors duration-200;
-  }
-}
-
-/* Shimmer effect for skeletons */
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite;
 }
 
 .auth-background {
   @apply bg-auth-gradient dark:bg-none dark:bg-gray-950;
-}
-
-/* Enhanced hover effects */
-.hover-lift {
-  @apply transition-transform duration-300 ease-out;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-}
-
-.hover-glow {
-  @apply transition-shadow duration-300 ease-out;
-}
-
-.hover-glow:hover {
-  @apply shadow-lg;
-}
-
-/* Page transitions */
-.page-enter {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.page-enter-active {
-  opacity: 1;
-  transform: translateY(0);
-  transition: opacity 300ms, transform 300ms;
-}
-
-.page-exit {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.page-exit-active {
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 300ms, transform 300ms;
 }

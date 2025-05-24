@@ -3,16 +3,15 @@ export interface ApiToken {
   user_id: string
   token: string
   name: string
+  last_used_at: string | null
   created_at: string
   revoked: boolean
-  last_used_at?: string | null
 }
 
 export interface ApiUsage {
   id: string
   token_id: string
   endpoint: string
-  method: string
   status: number
   created_at: string
 }

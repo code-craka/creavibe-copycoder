@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
 import { createProject } from "@/app/actions/projects"
 import { Loader2, Plus } from "lucide-react"
-import { successToast, errorToast } from "@/lib/toast"
+import { toast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function AddProjectDialog() {
@@ -39,24 +39,31 @@ export function AddProjectDialog() {
       if (error) {
         if (typeof error === "object" && error !== null) {
           setErrors(error as Record<string, string[]>)
-          errorToast("Validation Error", {
+          toast({
+            title: "Validation Error",
             description: "Please check the form for errors",
+            variant: "destructive",
           })
         } else {
-          errorToast("Error", {
+          toast({
+            title: "Error",
             description: typeof error === "string" ? error : "Failed to create project",
+            variant: "destructive",
           })
         }
       } else {
-        successToast("Success", {
+        toast({
+          title: "Success",
           description: "Project created successfully",
         })
         setIsOpen(false)
         event.currentTarget.reset()
       }
     } catch (error) {
-      errorToast("Error", {
+      toast({
+        title: "Error",
         description: "An unexpected error occurred",
+        variant: "destructive",
       })
     } finally {
       setIsSubmitting(false)
@@ -66,7 +73,7 @@ export function AddProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-1 hover-lift">
+        <Button className="flex items-center gap-1">
           <Plus className="h-4 w-4" />
           <span>New Project</span>
         </Button>
@@ -110,7 +117,7 @@ export function AddProjectDialog() {
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting} className="relative overflow-hidden">
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -118,14 +125,6 @@ export function AddProjectDialog() {
                       </>
                     ) : (
                       "Create Project"
-                    )}
-                    {isSubmitting && (
-                      <motion.div
-                        className="absolute bottom-0 left-0 h-1 bg-primary-foreground/20"
-                        initial={{ width: 0 }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 2 }}
-                      />
                     )}
                   </Button>
                 </DialogFooter>
