@@ -6,8 +6,9 @@ export const metadata: Metadata = {
   description: "Create a new CreaVibe account",
 }
 
-export default function SignUpPage({ searchParams }: { searchParams: { error?: string } }) {
-  const error = searchParams.error
+export default async function SignUpPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const resolvedParams = await searchParams
+  const error = resolvedParams.error
   
   return (
     <div className="auth-background container relative flex min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:px-0">

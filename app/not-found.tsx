@@ -1,22 +1,13 @@
-"use client"
-
-import { Suspense } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
-// This component safely uses useSearchParams inside Suspense
-function NotFoundContent() {
-  // Safely use useSearchParams inside a component wrapped by Suspense
-  const searchParams = useSearchParams()
-  const referrer = searchParams.get("from") || ""
-
+// Server component for the 404 page
+export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
       <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
       <p className="text-xl mb-8 max-w-md">
         Sorry, the page you are looking for doesn't exist or has been moved.
-        {referrer && ` You came from ${referrer}.`}
       </p>
       <div className="flex gap-4">
         <Button asChild>
@@ -27,25 +18,5 @@ function NotFoundContent() {
         </Button>
       </div>
     </div>
-  )
-}
-
-export default function NotFound() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
-          <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
-          <p className="text-xl mb-8 max-w-md">Sorry, the page you are looking for doesn't exist or has been moved.</p>
-          <div className="flex gap-4">
-            <Button asChild>
-              <Link href="/">Return Home</Link>
-            </Button>
-          </div>
-        </div>
-      }
-    >
-      <NotFoundContent />
-    </Suspense>
   )
 }

@@ -117,7 +117,9 @@ export default function RootLayout({
                 </Suspense>
                 <Footer />
               </div>
-              <Analytics />
+              <Suspense fallback={null}>
+                <Analytics />
+              </Suspense>
               <Toaster position="top-right" expand={true} richColors closeButton />
               {/* Initialize avatar bucket */}
               <AvatarBucketInitializer />

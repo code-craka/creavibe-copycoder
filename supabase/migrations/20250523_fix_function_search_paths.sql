@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path TO public, pg_temp
 AS $$
 BEGIN
   NEW.updated_at = now();
@@ -12,12 +12,13 @@ BEGIN
 END;
 $$;
 
+
 -- Update check_record_ownership function
 CREATE OR REPLACE FUNCTION public.check_record_ownership(table_name text, record_id uuid)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path TO public, pg_temp
 AS $$
 DECLARE
   result boolean;

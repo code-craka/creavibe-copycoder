@@ -4,6 +4,9 @@ import { createServerComponentClient } from "@/utils/supabase/clients"
 import { AdvancedSettingsTabs } from "@/components/settings/advanced-settings-tabs"
 import { PageLayout } from "@/components/layout/page-layout"
 
+// Explicitly mark this route as dynamic since it uses authentication
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Settings - CreaVibe",
   description: "Manage your profile and preferences",
