@@ -1,21 +1,11 @@
 import { Suspense } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { createServerComponentClient } from "@/utils/supabase/clients"
+import { createServerClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getApiTokens, createApiToken, revokeApiToken, getApiUsage, getApiUsageMetrics } from "../actions/api-tokens"
 import { ApiKeysClient } from "./client"
-import { PageLayout } from "@/components/layout/page-layout"
-import type { Metadata } from "next"
-
-// Force dynamic rendering for this page
-export const dynamic = "force-dynamic"
-
-export const metadata: Metadata = {
-  title: "API Keys - CreaVibe",
-  description: "Manage your API keys to access the CreaVibe API",
-}
 
 // Loading skeleton for the page
 function ApiKeysLoading() {
@@ -40,7 +30,8 @@ function ApiKeysLoading() {
 }
 
 export default async function ApiKeysPage() {
-  const supabase = createServerComponentClient()
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
 
   // Check if user is authenticated
   const {
@@ -60,14 +51,14 @@ export default async function ApiKeysPage() {
 
   if (tokens && tokens.length > 0) {
     const activeToken = tokens.find((token) => !token.revoked) || tokens[0]
-    const { usage } = await getApiUsage(activeToken.id, 50)
-    const { dailyMetrics = [], endpointMetrics = [], statusMetrics = [] } = await getApiUsageMetrics(activeToken.id, 30) // Provide the default days parameter (30 days)
+    const { usage } = await getApiUsage(activeToken.id)
+    const metrics = await getApiUsageMetrics(activeToken.id)
 
     usageData = usage || []
     usageMetrics = {
-      dailyMetrics,
-      endpointMetrics,
-      statusMetrics,
+      dailyMetrics: metrics.dailyMetrics || [],
+      endpointMetrics: metrics.endpointMetrics || [],
+      statusMetrics: metrics.statusMetrics || [],
     }
   }
 
@@ -85,32 +76,30 @@ export default async function ApiKeysPage() {
   }
 
   return (
-    <PageLayout>
-      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
-          <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
-        </div>
-
-        <Alert>
-          <AlertTitle>Keep your API keys secure</AlertTitle>
-          <AlertDescription>
-            Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
-            repositories or client-side code.
-          </AlertDescription>
-        </Alert>
-
-        <Suspense fallback={<ApiKeysLoading />}>
-          <ApiKeysClient
-            tokens={tokens || []}
-            usage={usageData || []}
-            usageMetrics={usageMetrics}
-            onCreateToken={handleCreateToken}
-            onRevokeToken={handleRevokeToken}
-            error={error}
-          />
-        </Suspense>
+    <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
+        <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
       </div>
-    </PageLayout>
+
+      <Alert>
+        <AlertTitle>Keep your API keys secure</AlertTitle>
+        <AlertDescription>
+          Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
+          repositories or client-side code.
+        </AlertDescription>
+      </Alert>
+
+      <Suspense fallback={<ApiKeysLoading />}>
+        <ApiKeysClient
+          tokens={tokens || []}
+          usage={usageData || []}
+          usageMetrics={usageMetrics}
+          onCreateToken={handleCreateToken}
+          onRevokeToken={handleRevokeToken}
+          error={error}
+        />
+      </Suspense>
+    </div>
   )
 }

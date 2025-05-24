@@ -38,9 +38,9 @@ export function ProjectCard({ project }: ProjectCardProps) {
       >
         <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-300 bg-surface text-text border-border">
           <div className="relative aspect-video w-full overflow-hidden bg-muted">
-            {project.imageUrl ? (
+            {project.thumbnail_url ? (
               <Image
-                src={project.imageUrl || "/placeholder.svg"}
+                src={project.thumbnail_url || "/placeholder.svg"}
                 alt={project.title}
                 fill
                 className="object-cover"
@@ -80,7 +80,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             )}
           </CardContent>
           <CardFooter className="pt-2 flex justify-between items-center text-xs text-muted-foreground">
-            <span>Updated {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true })}</span>
+            <span>Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"

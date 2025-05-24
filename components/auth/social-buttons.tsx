@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
 import { useState } from "react"
-import { createBrowserComponentClient } from "@/utils/supabase/browser-client"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 
 interface SocialButtonsProps {
@@ -15,7 +15,7 @@ export function SocialButtons({ view }: SocialButtonsProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
   const [isGithubLoading, setIsGithubLoading] = useState<boolean>(false)
   const { toast } = useToast()
-  const supabase = createBrowserComponentClient()
+  const supabase = createClient()
 
   const handleGithubLogin = async () => {
     try {

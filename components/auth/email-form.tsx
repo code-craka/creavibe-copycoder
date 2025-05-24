@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createBrowserComponentClient } from "@/utils/supabase/browser-client"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { Mail } from "lucide-react"
@@ -26,7 +26,7 @@ export function EmailForm({ view }: EmailFormProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [isSent, setIsSent] = useState<boolean>(false)
   const { toast } = useToast()
-  const supabase = createBrowserComponentClient()
+  const supabase = createClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
