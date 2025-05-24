@@ -9,16 +9,6 @@ import { getProjects, getUserProfile } from "@/app/actions/projects"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { UserAvatar } from "@/components/dashboard/user-avatar"
-import { PageLayout } from "@/components/layout/page-layout"
-import type { Metadata } from "next"
-
-// Force dynamic rendering for this page
-export const dynamic = "force-dynamic"
-
-export const metadata: Metadata = {
-  title: "Dashboard - CreaVibe",
-  description: "Manage and organize all your creative projects",
-}
 
 async function ProjectsContent() {
   const { data: projects, error } = await getProjects()
@@ -77,34 +67,32 @@ export default async function DashboardPage() {
   const userName = profile?.full_name || session.user.email?.split("@")[0] || "there"
 
   return (
-    <PageLayout>
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <UserAvatar user={session.user} profileData={profile} />
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight" id="dashboard-heading">
-                Welcome, {userName}
-              </h1>
-              <p className="text-muted-foreground mt-1">Manage and organize all your creative projects</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="flex items-center gap-1">
-              <RefreshCw className="h-4 w-4" />
-              <span className="sr-only md:not-sr-only">Refresh</span>
-            </Button>
-            <AddProjectDialog />
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex items-center gap-3">
+          <UserAvatar user={session.user} profileData={profile} />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight" id="dashboard-heading">
+              Welcome, {userName}
+            </h1>
+            <p className="text-muted-foreground mt-1">Manage and organize all your creative projects</p>
           </div>
         </div>
 
-        <main aria-labelledby="dashboard-heading">
-          <Suspense fallback={<ProjectsSkeleton />}>
-            <ProjectsContent />
-          </Suspense>
-        </main>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="flex items-center gap-1">
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only md:not-sr-only">Refresh</span>
+          </Button>
+          <AddProjectDialog />
+        </div>
       </div>
-    </PageLayout>
+
+      <main aria-labelledby="dashboard-heading">
+        <Suspense fallback={<ProjectsSkeleton />}>
+          <ProjectsContent />
+        </Suspense>
+      </main>
+    </div>
   )
 }
