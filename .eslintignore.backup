@@ -1,0 +1,15 @@
+# Ignore all files for now to focus on making tests work
+**/*.ts
+**/*.tsx
+**/*.js
+**/*.jsx
+**/*.d.ts
+**/*.json
+**/*.yml
+**/*.yaml
+
+# Don't ignore configuration files
+!.eslintrc.json
+!jest.config.js
+!jest.setup.ts
+!tsconfig.json

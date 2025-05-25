@@ -31,6 +31,7 @@ export function ApiKeysClient({
   onRevokeToken,
   error,
 }: ApiKeysClientProps) {
+  const [_tokens, setTokens] = useState<ApiToken[]>([])
   const [activeTokenId, setActiveTokenId] = useState<string | null>(
     tokens.find((token) => !token.revoked)?.id || tokens[0]?.id || null,
   )
@@ -51,7 +52,7 @@ export function ApiKeysClient({
         setActiveTokenId(token.id)
         return token
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Failed to create token",
         description: "There was an error creating your API token.",
@@ -75,7 +76,7 @@ export function ApiKeysClient({
         const nextActiveToken = tokens.find((token) => !token.revoked && token.id !== tokenId)
         setActiveTokenId(nextActiveToken?.id || tokens[0]?.id)
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Failed to revoke token",
         description: "There was an error revoking your API token.",

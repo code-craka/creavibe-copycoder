@@ -6,6 +6,16 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getApiTokens, createApiToken, revokeApiToken, getApiUsage, getApiUsageMetrics } from "../actions/api-tokens"
 import { ApiKeysClient } from "./client"
+import { PageLayout } from "@/components/layout/page-layout"
+import type { Metadata } from "next"
+
+// Force dynamic rendering for this page
+export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "API Keys - CreaVibe",
+  description: "Manage your API keys to access the CreaVibe API",
+}
 
 // Loading skeleton for the page
 function ApiKeysLoading() {
@@ -76,30 +86,32 @@ export default async function ApiKeysPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
-        <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
+    <PageLayout>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
+          <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
+        </div>
+
+        <Alert>
+          <AlertTitle>Keep your API keys secure</AlertTitle>
+          <AlertDescription>
+            Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
+            repositories or client-side code.
+          </AlertDescription>
+        </Alert>
+
+        <Suspense fallback={<ApiKeysLoading />}>
+          <ApiKeysClient
+            tokens={tokens || []}
+            usage={usageData || []}
+            usageMetrics={usageMetrics}
+            onCreateToken={handleCreateToken}
+            onRevokeToken={handleRevokeToken}
+            error={error}
+          />
+        </Suspense>
       </div>
-
-      <Alert>
-        <AlertTitle>Keep your API keys secure</AlertTitle>
-        <AlertDescription>
-          Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
-          repositories or client-side code.
-        </AlertDescription>
-      </Alert>
-
-      <Suspense fallback={<ApiKeysLoading />}>
-        <ApiKeysClient
-          tokens={tokens || []}
-          usage={usageData || []}
-          usageMetrics={usageMetrics}
-          onCreateToken={handleCreateToken}
-          onRevokeToken={handleRevokeToken}
-          error={error}
-        />
-      </Suspense>
-    </div>
+    </PageLayout>
   )
 }

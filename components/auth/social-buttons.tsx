@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Github } from "lucide-react"
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/utils/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 
 interface SocialButtonsProps {
@@ -11,7 +11,7 @@ interface SocialButtonsProps {
 }
 
 export function SocialButtons({ view }: SocialButtonsProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [_isLoading, _setIsLoading] = useState<boolean>(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
   const [isGithubLoading, setIsGithubLoading] = useState<boolean>(false)
   const { toast } = useToast()
@@ -30,7 +30,7 @@ export function SocialButtons({ view }: SocialButtonsProps) {
       if (error) {
         throw error
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "There was an error logging in with GitHub.",
@@ -54,7 +54,7 @@ export function SocialButtons({ view }: SocialButtonsProps) {
       if (error) {
         throw error
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "There was an error logging in with Google.",

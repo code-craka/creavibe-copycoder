@@ -9,6 +9,15 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"
 import { ModeToggle } from "@/components/mode-toggle"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { BarChart } from "lucide-react"
 
 export function Navbar() {
   return (
@@ -48,6 +57,35 @@ export function Navbar() {
         </NavigationMenu>
         <div className="ml-auto flex items-center space-x-4">
           <ModeToggle />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <BarChart className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Analytics</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/analytics">Dashboard</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics/cohorts">Cohort Analysis</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics/lifecycle">User Lifecycle</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics?tab=funnels">Funnels</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics?tab=heatmaps">Heatmaps</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/analytics?tab=abtests">A/B Tests</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" asChild>
             <Link href="/login">Sign In</Link>
           </Button>

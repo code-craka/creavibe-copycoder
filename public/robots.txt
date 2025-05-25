@@ -1,0 +1,13 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin and private routes
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /api-keys
+Disallow: /analytics
+Disallow: /billing
+
+# Sitemap location
+Sitemap: https://creavibe.com/sitemap.xml

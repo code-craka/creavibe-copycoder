@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { cookies } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
@@ -15,7 +15,7 @@ function generateToken(): string {
 export async function createApiToken(name: string): Promise<{ success: boolean; token?: ApiToken; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -49,7 +49,7 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
 
     revalidatePath("/api-keys")
     return { success: true, token: data as ApiToken }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to create API token" }
   }
 }
@@ -58,7 +58,7 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
 export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiToken[]; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -82,7 +82,7 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
     }
 
     return { success: true, tokens: data as ApiToken[] }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to fetch API tokens" }
   }
 }
@@ -91,7 +91,7 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
 export async function revokeApiToken(tokenId: string): Promise<{ success: boolean; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -116,7 +116,7 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 
     revalidatePath("/api-keys")
     return { success: true }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to revoke API token" }
   }
 }
@@ -125,7 +125,7 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -161,7 +161,7 @@ export async function getApiUsage(tokenId: string): Promise<{ success: boolean; 
     }
 
     return { success: true, usage: data as ApiUsage[] }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to fetch API usage" }
   }
 }
@@ -179,7 +179,7 @@ export async function getApiUsageMetrics(
 }> {
   try {
     const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -265,7 +265,7 @@ export async function getApiUsageMetrics(
       endpointMetrics,
       statusMetrics,
     }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to fetch API usage metrics" }
   }
 }

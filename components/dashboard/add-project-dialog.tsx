@@ -34,7 +34,7 @@ export function AddProjectDialog() {
     const formData = new FormData(event.currentTarget)
 
     try {
-      const { data, error } = await createProject(formData)
+      const { data: _data, error } = await createProject(formData)
 
       if (error) {
         if (typeof error === "object" && error !== null) {
@@ -59,7 +59,7 @@ export function AddProjectDialog() {
         setIsOpen(false)
         event.currentTarget.reset()
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -90,7 +90,7 @@ export function AddProjectDialog() {
               <DialogHeader>
                 <DialogTitle>Create New Project</DialogTitle>
                 <DialogDescription>
-                  Fill in the details below to create a new project. Click save when you're done.
+                  Fill in the details below to create a new project. Click save when you&apos;re done.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 py-4">

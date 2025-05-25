@@ -1,0 +1,8 @@
+packages:
+  - .
+
+ignoredBuiltDependencies:
+  - sharp
+onlyBuiltDependencies:
+  - core-js
+  - supabase

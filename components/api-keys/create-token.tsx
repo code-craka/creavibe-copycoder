@@ -36,7 +36,7 @@ export function CreateToken({ onCreateToken }: CreateTokenProps) {
       await onCreateToken(tokenName)
       setTokenName("")
       setShowForm(false)
-    } catch (error) {
+    } catch (_error) {
       setError("Failed to create token")
     } finally {
       setIsCreating(false)

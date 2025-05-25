@@ -3,6 +3,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
+import { validateUserAccess } from "@/lib/supabase/rls-helpers"
 
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
@@ -35,82 +38,79 @@ export async function getProjects() {
 }
 
 export async function createProject(formData: FormData) {
-  const supabase = createClient()
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
 
+  // Get the current user
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
-    return { error: "Not authenticated", data: null }
+  if (!user) {
+    return { error: "Not authenticated" }
   }
 
-  const title = formData.get("title") as string
+  const name = formData.get("name") as string
   const description = formData.get("description") as string
 
-  const validatedFields = projectSchema.safeParse({
-    title,
-    description,
-  })
-
-  if (!validatedFields.success) {
-    return { error: validatedFields.error.flatten().fieldErrors, data: null }
+  if (!name) {
+    return { error: "Name is required" }
   }
 
+  // Insert with RLS - this will only work if the user is authenticated
+  // and the RLS policy allows the insert
   const { data, error } = await supabase
     .from("projects")
-    .insert([
-      {
-        title,
-        description,
-        user_id: session.user.id,
-        status: "draft",
-      },
-    ])
+    .insert({
+      name,
+      description,
+      user_id: user.id, // Explicitly set the user_id for RLS
+    })
     .select()
-
-  if (error) {
-    console.error("Error creating project:", error)
-    return { error: error.message, data: null }
-  }
-
-  revalidatePath("/dashboard")
-  return { data, error: null }
-}
-
-export async function deleteProject(projectId: string) {
-  const supabase = createClient()
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return { error: "Not authenticated", data: null }
-  }
-
-  // First check if the project belongs to the user
-  const { data: project, error: fetchError } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", projectId)
-    .eq("user_id", session.user.id)
     .single()
 
-  if (fetchError || !project) {
-    console.error("Error fetching project:", fetchError)
-    return { error: "Project not found or you don't have permission to delete it", data: null }
-  }
-
-  const { error } = await supabase.from("projects").delete().eq("id", projectId)
-
   if (error) {
-    console.error("Error deleting project:", error)
-    return { error: error.message, data: null }
+    return { error: error.message }
   }
 
   revalidatePath("/dashboard")
-  return { data: { success: true }, error: null }
+  return { success: true, data }
+}
+
+export async function deleteProject(formData: FormData) {
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
+
+  // Get the current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: "Not authenticated" }
+  }
+
+  const id = formData.get("id") as string
+
+  if (!id) {
+    return { error: "Project ID is required" }
+  }
+
+  // Validate that the user owns this project before deleting
+  const hasAccess = await validateUserAccess(supabase, "projects", id, user.id)
+
+  if (!hasAccess) {
+    return { error: "You do not have permission to delete this project" }
+  }
+
+  const { error } = await supabase.from("projects").delete().eq("id", id)
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  revalidatePath("/dashboard")
+  return { success: true }
 }
 
 export async function getUserProfile() {

@@ -26,6 +26,9 @@ export default async function SettingsPage() {
   }
 
   // Fetch user profile data
+  // Use type assertion to handle the profiles table which is not in the Database type definition
+  // Fetch user profile data from the profiles table
+  // This table might not be in the Database type definition, so we use type assertion
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
@@ -42,7 +45,7 @@ export default async function SettingsPage() {
           </p>
         </div>
 
-        <AdvancedSettingsTabs user={user} profile={profile} />
+        <AdvancedSettingsTabs user={user} profile={profile || undefined} />
       </div>
     </PageLayout>
   )
