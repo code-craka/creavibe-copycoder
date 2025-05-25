@@ -1,4 +1,4 @@
-import { Suspense } from "react"
+import React, { Suspense } from "react"
 import { ProjectGrid } from "@/components/dashboard/project-grid"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
