@@ -1,6 +1,6 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
 import { revalidatePath } from "next/cache"
@@ -14,8 +14,7 @@ function generateToken(): string {
 // Create a new API token
 export async function createApiToken(name: string): Promise<{ success: boolean; token?: ApiToken; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -57,8 +56,7 @@ export async function createApiToken(name: string): Promise<{ success: boolean; 
 // Get all API tokens for the current user
 export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiToken[]; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -90,8 +88,7 @@ export async function getApiTokens(): Promise<{ success: boolean; tokens?: ApiTo
 // Revoke an API token
 export async function revokeApiToken(tokenId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -124,8 +121,7 @@ export async function revokeApiToken(tokenId: string): Promise<{ success: boolea
 // Get API usage for a specific token
 export async function getApiUsage(tokenId: string): Promise<{ success: boolean; usage?: ApiUsage[]; error?: string }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {
@@ -178,8 +174,7 @@ export async function getApiUsageMetrics(
   error?: string
 }> {
   try {
-    const cookieStore = cookies()
-    const supabase = createServerClient(cookieStore)
+    const supabase = createClient()
 
     // Get the current user
     const {

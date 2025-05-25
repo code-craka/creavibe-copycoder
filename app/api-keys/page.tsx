@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getApiTokens, createApiToken, revokeApiToken, getApiUsage, getApiUsageMetrics } from "../actions/api-tokens"
@@ -30,8 +30,7 @@ function ApiKeysLoading() {
 }
 
 export default async function ApiKeysPage() {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+  const supabase = createClient()
 
   // Check if user is authenticated
   const {
