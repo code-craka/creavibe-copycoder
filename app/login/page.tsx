@@ -6,9 +6,7 @@ export const metadata: Metadata = {
   description: "Sign in to your CreaVibe account",
 }
 
-export default function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
-  const error = searchParams.error
-  
+export default function LoginPage() {
   return (
     <div className="auth-background container relative flex min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:px-0">
       <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
