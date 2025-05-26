@@ -1,0 +1,158 @@
+# Windsurf IDE Configuration for Creavibe Project
+
+# Project Structure
+structure:
+  app: "Next.js App Router structure"
+  components: "UI components organized by feature"
+  lib: "Utility functions and shared code"
+  types: "TypeScript type definitions"
+  public: "Static assets"
+  styles: "Global styles and CSS"
+  hooks: "React hooks"
+  data: "Static data and mock data"
+  scripts: "Build and utility scripts"
+  tests: "Test files"
+
+# File Patterns
+patterns:
+  component: "components/{name}/{name}.tsx"
+  page: "app/{path}/page.tsx"
+  layout: "app/{path}/layout.tsx"
+  serverAction: "app/actions/{name}.ts"
+  hook: "hooks/use-{name}.ts"
+  util: "lib/{name}.ts"
+  type: "types/{name}.ts"
+  test: "tests/{name}.test.tsx"
+
+# Code Snippets
+snippets:
+  serverComponent: |
+    export default function Component() {
+      return (
+        <div>
+          {/* Component content */}
+        </div>
+      )
+    }
+  clientComponent: |
+    'use client'
+    
+    import { useState } from 'react'
+    
+    export default function Component() {
+      const [state, setState] = useState()
+      
+      return (
+        <div>
+          {/* Component content */}
+        </div>
+      )
+    }
+  serverAction: |
+    'use server'
+    
+    import { z } from 'zod'
+    
+    const schema = z.object({
+      // Define schema
+    })
+    
+    export async function action(formData: FormData) {
+      // Validate and process data
+    }
+  hook: |
+    import { useState, useEffect } from 'react'
+    
+    export function useHook() {
+      const [state, setState] = useState()
+      
+      useEffect(() => {
+        // Effect logic
+      }, [])
+      
+      return { state }
+    }
+
+# Dependencies
+dependencies:
+  ui: "shadcn/ui components"
+  auth: "Supabase Auth"
+  database: "Supabase Database"
+  email: "Resend"
+  analytics: "PostHog"
+  forms: "React Hook Form + Zod"
+  styling: "Tailwind CSS"
+  stateManagement: "React Context + Hooks"
+  testing: "Jest + React Testing Library"
+
+# Recommended Extensions
+extensions:
+  - "dbaeumer.vscode-eslint"
+  - "esbenp.prettier-vscode"
+  - "bradlc.vscode-tailwindcss"
+  - "ms-vscode.vscode-typescript-next"
+  - "dsznajder.es7-react-js-snippets"
+  - "formulahendry.auto-rename-tag"
+  - "naumovs.color-highlight"
+  - "mikestead.dotenv"
+  - "yoavbls.pretty-ts-errors"
+
+# Environment Variables
+environmentVariables:
+  - "NEXT_PUBLIC_SUPABASE_URL"
+  - "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  - "SUPABASE_SERVICE_ROLE_KEY"
+  - "NEXT_PUBLIC_APP_URL"
+  - "RESEND_API_KEY"
+  - "NEXT_PUBLIC_POSTHOG_KEY"
+  - "NEXT_PUBLIC_POSTHOG_HOST"
+  - "STRIPE_SECRET_KEY"
+  - "STRIPE_WEBHOOK_SECRET"
+  - "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
+  - "UPSTASH_REDIS_REST_URL"
+  - "UPSTASH_REDIS_REST_TOKEN"
+
+# Project Conventions
+conventions:
+  naming:
+    components: "PascalCase"
+    files: "kebab-case"
+    functions: "camelCase"
+    constants: "UPPER_CASE"
+    types: "PascalCase"
+  styling:
+    approach: "Tailwind CSS utility classes"
+    organization: "Component-specific styles"
+  stateManagement:
+    approach: "React Context + Hooks"
+    organization: "Feature-based contexts"
+  errorHandling:
+    approach: "Try/catch with error boundaries"
+    organization: "Component-level error handling"
+  testing:
+    approach: "Component testing with React Testing Library"
+    organization: "Test files alongside components"
+  documentation:
+    approach: "JSDoc comments for functions and components"
+    organization: "README.md files in each directory"
+
+# AI Assistance Configuration
+aiAssistance:
+  codeGeneration:
+    style: "Modern React with TypeScript"
+    patterns: "Next.js App Router patterns"
+    conventions: "shadcn/ui component patterns"
+  codeCompletion:
+    imports: true
+    types: true
+    props: true
+    hooks: true
+    tailwind: true
+  documentation:
+    generateComments: true
+    generateReadme: true
+    generateTypes: true
+  refactoring:
+    suggestImprovements: true
+    suggestOptimizations: true
+    suggestAccessibility: true

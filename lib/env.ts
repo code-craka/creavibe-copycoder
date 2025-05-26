@@ -1,112 +1,98 @@
-/**
- * Type-safe environment variable access
- */
+// Environment variable validation and type-safe access
 
-// Define the shape of our environment variables
-interface Env {
-  // Application
-  NEXT_PUBLIC_APP_URL: string
+import { z } from "zod"
 
+// Schema for environment variables
+const envSchema = z.object({
   // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: string
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: string
-  SUPABASE_SERVICE_ROLE_KEY: string
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_JWT_SECRET: z.string().optional(),
 
-  // Stripe
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: string
-  STRIPE_SECRET_KEY: string
+  // App
+  NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 
-  // Analytics
-  NEXT_PUBLIC_POSTHOG_KEY: string
-  NEXT_PUBLIC_POSTHOG_HOST: string
+  // Email (Resend)
+  RESEND_API_KEY: z.string().optional(),
 
-  // Rate Limiting
-  UPSTASH_REDIS_REST_URL: string
-  UPSTASH_REDIS_REST_TOKEN: string
-}
+  // Analytics (PostHog)
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().url().optional(),
 
-/**
- * Get an environment variable with type safety
- * @param key The environment variable key
- * @param defaultValue Optional default value if the environment variable is not set
- * @returns The environment variable value or the default value
- */
-export function getEnv<K extends keyof Env>(key: K, defaultValue?: string): string {
-  const value = process.env[key] as string | undefined
+  // Payments (Stripe)
+  STRIPE_SECRET_KEY: z.string().optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 
-  if (value === undefined) {
-    if (defaultValue !== undefined) {
-      return defaultValue
+  // Caching (Upstash Redis)
+  UPSTASH_REDIS_REST_URL: z.string().url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+
+  // Email Server (Optional - for NodeMailer)
+  EMAIL_SERVER_HOST: z.string().optional(),
+  EMAIL_SERVER_PORT: z.coerce.number().optional(),
+  EMAIL_SERVER_USER: z.string().optional(),
+  EMAIL_SERVER_PASSWORD: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional(),
+})
+
+// Parse environment variables
+const parsedEnv = envSchema.safeParse({
+  // Supabase
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
+
+  // App
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+
+  // Email (Resend)
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+
+  // Analytics (PostHog)
+  NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+  NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+
+  // Payments (Stripe)
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+
+  // Caching (Upstash Redis)
+  UPSTASH_REDIS_REST_URL: process.env.KV_REST_API_URL,
+  UPSTASH_REDIS_REST_TOKEN: process.env.KV_REST_API_TOKEN,
+})
+
+// Export environment variables with type safety
+export const env = parsedEnv.success
+  ? parsedEnv.data
+  : {
+      // Provide fallbacks for required variables
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+
+      // Optional variables
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+      NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+      UPSTASH_REDIS_REST_URL: process.env.KV_REST_API_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.KV_REST_API_TOKEN,
+      EMAIL_SERVER_HOST: process.env.EMAIL_SERVER_HOST,
+      EMAIL_SERVER_PORT: process.env.EMAIL_SERVER_PORT ? Number.parseInt(process.env.EMAIL_SERVER_PORT) : undefined,
+      EMAIL_SERVER_USER: process.env.EMAIL_SERVER_USER,
+      EMAIL_SERVER_PASSWORD: process.env.EMAIL_SERVER_PASSWORD,
+      EMAIL_FROM: process.env.EMAIL_FROM,
     }
 
-    // In development, provide a more helpful error message
-    if (process.env.NODE_ENV === "development") {
-      console.warn(`⚠️ Environment variable ${key} is not set`)
-    }
-
-    return ""
-  }
-
-  return value
-}
-
-/**
- * Check if all required environment variables are set
- * @returns true if all required environment variables are set, false otherwise
- */
-export function checkRequiredEnvVars(): boolean {
-  const requiredVars = [
-    // Application
-    "NEXT_PUBLIC_APP_URL",
-
-    // Supabase
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-
-    // Stripe
-    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
-    "STRIPE_SECRET_KEY",
-
-    // Analytics
-    "NEXT_PUBLIC_POSTHOG_KEY",
-    "NEXT_PUBLIC_POSTHOG_HOST",
-
-    // Rate Limiting
-    "UPSTASH_REDIS_REST_URL",
-    "UPSTASH_REDIS_REST_TOKEN",
-  ]
-
-  const missingVars = requiredVars.filter((varName) => !process.env[varName])
-
-  if (missingVars.length > 0) {
-    console.warn(`⚠️ Missing environment variables: ${missingVars.join(", ")}`)
-    return false
-  }
-
-  return true
-}
-
-/**
- * Get the base URL of the application
- * Handles cases where NEXT_PUBLIC_APP_URL is not set
- */
-export function getBaseUrl(): string {
-  // Get the NEXT_PUBLIC_APP_URL environment variable
-  const appUrl = getEnv("NEXT_PUBLIC_APP_URL")
-
-  // If it's set, use it
-  if (appUrl) {
-    return appUrl
-  }
-
-  // Otherwise, try to construct it from the request
-  if (typeof window !== "undefined") {
-    // In the browser, use the current URL
-    return window.location.origin
-  }
-
-  // In a server context without NEXT_PUBLIC_APP_URL, use a placeholder
-  // This should be avoided in production
-  return "http://localhost:3000"
+// Log warning if environment variables failed validation
+if (!parsedEnv.success) {
+  console.warn("❌ Invalid environment variables:", JSON.stringify(parsedEnv.error.format(), null, 2))
 }
