@@ -20,6 +20,7 @@ import { createProject } from "@/app/actions/projects"
 import { Loader2, Plus } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
+import { ApiError } from "@/utils/api-response"
 
 export function AddProjectDialog() {
   const [isOpen, setIsOpen] = useState(false)
@@ -37,17 +38,19 @@ export function AddProjectDialog() {
       const { data, error } = await createProject(formData)
 
       if (error) {
-        if (typeof error === "object" && error !== null) {
-          setErrors(error as Record<string, string[]>)
+        if (error.code === "validation_error" && error.details) {
+          // Handle validation errors with field-specific messages
+          setErrors(error.details as Record<string, string[]>)
           toast({
             title: "Validation Error",
             description: "Please check the form for errors",
             variant: "destructive",
           })
         } else {
+          // Handle other types of errors
           toast({
             title: "Error",
-            description: typeof error === "string" ? error : "Failed to create project",
+            description: error.message || "Failed to create project",
             variant: "destructive",
           })
         }
