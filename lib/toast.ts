@@ -1,4 +1,4 @@
-import { toast as sonnerToast, type ExternalToast, type Action } from "sonner"
+import { toast as sonnerToast, type ToastT } from "sonner"
 
 type ToastType = "success" | "error" | "info" | "warning"
 
@@ -7,11 +7,11 @@ interface ToastOptions {
   duration?: number
   action?: {
     label: string
-    onClick: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+    onClick: () => void
   }
   cancel?: {
     label: string
-    onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+    onClick?: () => void
   }
 }
 
@@ -20,20 +20,20 @@ export function toast(
   { description, duration = 5000, action, cancel }: ToastOptions = {},
   type: ToastType = "info",
 ) {
-  const options: ExternalToast = {
+  const options: ToastT = {
     description,
     duration,
     action: action
       ? {
           label: action.label,
           onClick: action.onClick,
-        } as Action
+        }
       : undefined,
     cancel: cancel
       ? {
           label: cancel.label,
-          onClick: cancel.onClick || ((e) => { /* Default no-op function */ }),
-        } as Action
+          onClick: cancel.onClick,
+        }
       : undefined,
   }
 

@@ -39,7 +39,7 @@ export default function ContactPage() {
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">Contact Us</h1>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Need help or want to partner with us? We&apos;re here to help.
+                  Need help or want to partner with us? We're here to help.
                 </p>
               </div>
             </div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Interested in enterprise solutions or partnerships? Let&apos;s talk.
+                    Interested in enterprise solutions or partnerships? Let's talk.
                   </p>
                   <p className="font-medium">sales@creavibe.com</p>
                 </CardContent>
@@ -110,7 +110,7 @@ export default function ContactPage() {
               <div className="space-y-4">
                 <h2 className="text-3xl font-bold">Get in Touch</h2>
                 <p className="text-muted-foreground">
-                  Fill out the form and we&apos;ll get back to you as soon as possible.
+                  Fill out the form and we'll get back to you as soon as possible.
                 </p>
                 <form className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

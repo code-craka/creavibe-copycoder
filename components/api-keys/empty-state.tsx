@@ -15,7 +15,7 @@ export function EmptyState({ onCreateToken }: EmptyStateProps) {
       <Card className="border-dashed">
         <CardHeader>
           <CardTitle className="text-center">No API Tokens</CardTitle>
-          <CardDescription className="text-center">You haven&apos;t created any API tokens yet.</CardDescription>
+          <CardDescription className="text-center">You haven't created any API tokens yet.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center pb-6">
           <div className="rounded-full bg-muted p-6">

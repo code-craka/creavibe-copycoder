@@ -40,8 +40,9 @@ export function PostHogProvider({ children, apiKey, apiHost }: PostHogProviderPr
     }
 
     return () => {
-      if (typeof window !== "undefined") {
-        posthog.shutdown()
+      if (typeof window !== "undefined" && posthog && typeof posthog.cleanup === "function") {
+        // Use cleanup instead of shutdown
+        posthog.cleanup()
       }
     }
   }, [apiKey, apiHost])

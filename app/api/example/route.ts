@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     // Your API logic here
 
     return NextResponse.json({ success: true, data: body })
-  } catch (_error) {
+  } catch (error) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 })
   }
 }
