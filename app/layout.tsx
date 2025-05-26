@@ -5,7 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/layout/navbar"
 import { Footer } from "@/components/layout/footer"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner"
 import { Analytics } from "@/components/analytics/analytics"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 import { AnalyticsContextProvider } from "@/components/providers/analytics-provider"
@@ -113,10 +113,8 @@ export default function RootLayout({
                 </Suspense>
                 <Footer />
               </div>
-              <Suspense fallback={null}>
-                <Analytics />
-              </Suspense>
-              <Toaster />
+              <Analytics />
+              <Toaster position="top-right" expand={true} richColors closeButton />
               {/* JSON-LD Structured Data */}
               <OrganizationLD />
               <WebsiteLD />

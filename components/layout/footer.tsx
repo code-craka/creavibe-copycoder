@@ -93,10 +93,10 @@ export function Footer() {
           <p className="text-muted-foreground text-sm">© {new Date().getFullYear()} CreaVibe. All rights reserved.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link href="/terms" className="text-muted-foreground text-sm hover:text-foreground">
-              Terms
+              Terms of Service
             </Link>
-            <Link href="/privacy" className="text-muted-foreground text-sm hover:text-foreground">
-              Privacy
+            <Link href="/privacy-policy" className="text-muted-foreground text-sm hover:text-foreground">
+              Privacy Policy
             </Link>
             <Link href="/cookies" className="text-muted-foreground text-sm hover:text-foreground">
               Cookies

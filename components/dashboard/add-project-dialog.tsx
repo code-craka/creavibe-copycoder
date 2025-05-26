@@ -18,9 +18,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react"
 import { createProject } from "@/app/actions/projects"
 import { Loader2, Plus } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { successToast, errorToast } from "@/lib/toast"
 import { motion, AnimatePresence } from "framer-motion"
-import { ApiError } from "@/utils/api-response"
 
 export function AddProjectDialog() {
   const [isOpen, setIsOpen] = useState(false)
@@ -38,35 +37,26 @@ export function AddProjectDialog() {
       const { data, error } = await createProject(formData)
 
       if (error) {
-        if (error.code === "validation_error" && error.details) {
-          // Handle validation errors with field-specific messages
-          setErrors(error.details as Record<string, string[]>)
-          toast({
-            title: "Validation Error",
+        if (typeof error === "object" && error !== null) {
+          setErrors(error as Record<string, string[]>)
+          errorToast("Validation Error", {
             description: "Please check the form for errors",
-            variant: "destructive",
           })
         } else {
-          // Handle other types of errors
-          toast({
-            title: "Error",
-            description: error.message || "Failed to create project",
-            variant: "destructive",
+          errorToast("Error", {
+            description: typeof error === "string" ? error : "Failed to create project",
           })
         }
       } else {
-        toast({
-          title: "Success",
+        successToast("Success", {
           description: "Project created successfully",
         })
         setIsOpen(false)
         event.currentTarget.reset()
       }
     } catch (error) {
-      toast({
-        title: "Error",
+      errorToast("Error", {
         description: "An unexpected error occurred",
-        variant: "destructive",
       })
     } finally {
       setIsSubmitting(false)
@@ -76,7 +66,7 @@ export function AddProjectDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-1">
+        <Button className="flex items-center gap-1 hover-lift">
           <Plus className="h-4 w-4" />
           <span>New Project</span>
         </Button>
@@ -120,7 +110,7 @@ export function AddProjectDialog() {
                   <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting} className="relative overflow-hidden">
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -128,6 +118,14 @@ export function AddProjectDialog() {
                       </>
                     ) : (
                       "Create Project"
+                    )}
+                    {isSubmitting && (
+                      <motion.div
+                        className="absolute bottom-0 left-0 h-1 bg-primary-foreground/20"
+                        initial={{ width: 0 }}
+                        animate={{ width: "100%" }}
+                        transition={{ duration: 2 }}
+                      />
                     )}
                   </Button>
                 </DialogFooter>

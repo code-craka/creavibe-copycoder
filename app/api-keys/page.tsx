@@ -1,13 +1,21 @@
 import { Suspense } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { createClient } from "@/utils/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getApiTokens, createApiToken, revokeApiToken, getApiUsage, getApiUsageMetrics } from "../actions/api-tokens"
 import { ApiKeysClient } from "./client"
+import { PageLayout } from "@/components/layout/page-layout"
+import type { Metadata } from "next"
 
-// Mark this page as dynamic since it uses cookies via Supabase auth
-export const dynamic = 'force-dynamic'
+// Force dynamic rendering for this page
+export const dynamic = "force-dynamic"
+
+export const metadata: Metadata = {
+  title: "API Keys - CreaVibe",
+  description: "Manage your API keys to access the CreaVibe API",
+}
 
 // Loading skeleton for the page
 function ApiKeysLoading() {
@@ -32,7 +40,8 @@ function ApiKeysLoading() {
 }
 
 export default async function ApiKeysPage() {
-  const supabase = createClient()
+  const cookieStore = cookies()
+  const supabase = createServerClient(cookieStore)
 
   // Check if user is authenticated
   const {
@@ -44,32 +53,30 @@ export default async function ApiKeysPage() {
   }
 
   // Fetch API tokens
-  const tokensResponse = await getApiTokens()
-  const tokens = tokensResponse.data || []
-  const error = tokensResponse.error ? tokensResponse.error.message : undefined
+  const { tokens, error } = await getApiTokens()
 
   // Fetch usage data for the first token if available
   let usageData = null
   let usageMetrics = null
 
-  if (tokens.length > 0) {
+  if (tokens && tokens.length > 0) {
     const activeToken = tokens.find((token) => !token.revoked) || tokens[0]
-    const usageResponse = await getApiUsage(activeToken.id)
-    const metricsResponse = await getApiUsageMetrics(activeToken.id)
+    const { usage } = await getApiUsage(activeToken.id)
+    const metrics = await getApiUsageMetrics(activeToken.id)
 
-    usageData = usageResponse.data || []
-    usageMetrics = metricsResponse.data ? {
-      dailyMetrics: metricsResponse.data.dailyMetrics || [],
-      endpointMetrics: metricsResponse.data.endpointMetrics || [],
-      statusMetrics: metricsResponse.data.statusMetrics || [],
-    } : { dailyMetrics: [], endpointMetrics: [], statusMetrics: [] }
+    usageData = usage || []
+    usageMetrics = {
+      dailyMetrics: metrics.dailyMetrics || [],
+      endpointMetrics: metrics.endpointMetrics || [],
+      statusMetrics: metrics.statusMetrics || [],
+    }
   }
 
   // Handle token creation
   async function handleCreateToken(name: string) {
     "use server"
     const result = await createApiToken(name)
-    return result.data || undefined
+    return result.token
   }
 
   // Handle token revocation
@@ -79,30 +86,32 @@ export default async function ApiKeysPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
-        <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
+    <PageLayout>
+      <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
+          <p className="text-muted-foreground">Manage your API keys to access the CreaVibe API.</p>
+        </div>
+
+        <Alert>
+          <AlertTitle>Keep your API keys secure</AlertTitle>
+          <AlertDescription>
+            Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
+            repositories or client-side code.
+          </AlertDescription>
+        </Alert>
+
+        <Suspense fallback={<ApiKeysLoading />}>
+          <ApiKeysClient
+            tokens={tokens || []}
+            usage={usageData || []}
+            usageMetrics={usageMetrics}
+            onCreateToken={handleCreateToken}
+            onRevokeToken={handleRevokeToken}
+            error={error}
+          />
+        </Suspense>
       </div>
-
-      <Alert>
-        <AlertTitle>Keep your API keys secure</AlertTitle>
-        <AlertDescription>
-          Your API keys grant access to your account and should be kept secure. Do not share your API keys in public
-          repositories or client-side code.
-        </AlertDescription>
-      </Alert>
-
-      <Suspense fallback={<ApiKeysLoading />}>
-        <ApiKeysClient
-          tokens={tokens || []}
-          usage={usageData || []}
-          usageMetrics={usageMetrics}
-          onCreateToken={handleCreateToken}
-          onRevokeToken={handleRevokeToken}
-          error={error}
-        />
-      </Suspense>
-    </div>
+    </PageLayout>
   )
 }

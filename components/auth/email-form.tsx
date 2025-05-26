@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/utils/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { Mail } from "lucide-react"
@@ -54,7 +54,7 @@ export function EmailForm({ view }: EmailFormProps) {
         title: "Magic link sent",
         description: "Check your email for the magic link to sign in.",
       })
-    } catch (_error) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "There was an error sending the magic link.",

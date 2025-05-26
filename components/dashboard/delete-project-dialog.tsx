@@ -27,9 +27,7 @@ export function DeleteProjectDialog({ isOpen, onClose, projectId, projectTitle }
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      const formData = new FormData()
-      formData.append('id', projectId)
-      const { error } = await deleteProject(formData)
+      const { error } = await deleteProject(projectId)
 
       if (error) {
         toast({
@@ -44,7 +42,7 @@ export function DeleteProjectDialog({ isOpen, onClose, projectId, projectTitle }
         })
         onClose()
       }
-    } catch (_error) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "An unexpected error occurred",
