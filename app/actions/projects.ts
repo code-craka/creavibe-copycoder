@@ -1,135 +1,238 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { cookies } from "next/headers"
-import { createServerClient } from "@/lib/supabase/server"
-import { validateUserAccess } from "@/lib/supabase/rls-helpers"
+import type { Project, NewProject } from "@/types/project"
+import type { Profile } from "@/types/profile"
+import { createSuccessResponse, createErrorResponse, ErrorCode, handleValidationError, requireAuthentication, ApiResponse } from "@/utils/api-response"
+import { logger } from "@/utils/logger"
+import { checkRateLimit } from "@/utils/rate-limit"
+import { ProjectRLS } from "@/utils/supabase/rls-policies"
+import { PostgrestError } from "@supabase/supabase-js"
+import { formatPostgrestError, handleDatabaseError, handleCatchError } from "@/utils/error-handling"
+
+// This function has been moved to utils/error-handling.ts
 
 const projectSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be less than 100 characters"),
   description: z.string().optional(),
 })
 
-export async function getProjects() {
-  const supabase = createClient()
+export async function getProjects(): Promise<ApiResponse<Project[]>> {
+  return logger.trackPerformance('getProjects', async () => {
+    try {
+      const supabase = createClient()
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-  if (!session) {
-    return { error: "Not authenticated", data: null }
-  }
+      // Check authentication
+      const authError = requireAuthentication(session)
+      if (authError) return authError
 
-  const { data, error } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .order("updated_at", { ascending: false })
+      // Session is now guaranteed to be non-null
+      const userId = session!.user.id
 
-  if (error) {
-    console.error("Error fetching projects:", error)
-    return { error: error.message, data: null }
-  }
+      // Fetch projects from database
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("user_id", userId)
+        .order("updated_at", { ascending: false }) as { data: Project[] | null, error: any }
 
-  return { data, error: null }
+      // Handle database errors
+      if (error) {
+        return handleDatabaseError(error, "getProjects", { userId: session!.user.id })
+      }
+
+      // Return successful response
+      return createSuccessResponse(data || [])
+    } catch (error) {
+      return handleCatchError(error, "getProjects", {})
+    }
+  }, { component: 'projects' })
 }
 
-export async function createProject(formData: FormData) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+export async function createProject(formData: FormData): Promise<ApiResponse<Project[]>> {
+  return logger.trackPerformance('createProject', async () => {
+    try {
+      const supabase = createClient()
 
-  // Get the current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-  if (!user) {
-    return { error: "Not authenticated" }
-  }
+      // Check authentication
+      const authError = requireAuthentication(session)
+      if (authError) return authError
 
-  const name = formData.get("name") as string
-  const description = formData.get("description") as string
+      // Session is now guaranteed to be non-null
+      const userId = session!.user.id
 
-  if (!name) {
-    return { error: "Name is required" }
-  }
+      // Apply rate limiting to prevent abuse
+      const rateLimitKey = `create_project:${userId}`
+      const isAllowed = await checkRateLimit(rateLimitKey, 10, 60) // 10 requests per minute
+      
+      if (!isAllowed) {
+        return createErrorResponse(
+          ErrorCode.RATE_LIMITED,
+          "Too many requests. Please try again later."
+        )
+      }
 
-  // Insert with RLS - this will only work if the user is authenticated
-  // and the RLS policy allows the insert
-  const { data, error } = await supabase
-    .from("projects")
-    .insert({
-      name,
-      description,
-      user_id: user.id, // Explicitly set the user_id for RLS
-    })
-    .select()
-    .single()
+      // Extract and validate form data
+      const title = formData.get("title") as string
+      const description = formData.get("description") as string
 
-  if (error) {
-    return { error: error.message }
-  }
+      const validatedFields = projectSchema.safeParse({
+        title,
+        description,
+      })
 
-  revalidatePath("/dashboard")
-  return { success: true, data }
+      if (!validatedFields.success) {
+        return handleValidationError(validatedFields.error)
+      }
+
+      // Create the project in the database
+      const { data, error } = await supabase
+        .from("projects")
+        .insert([
+          {
+            title,
+            description,
+            user_id: userId,
+            status: "draft",
+          } as NewProject,
+        ])
+        .select() as { data: Project[] | null, error: any }
+
+      // Handle database errors
+      if (error) {
+        return handleDatabaseError(error, "createProject", { userId: session!.user.id, projectTitle: title })
+      }
+
+      // Revalidate the dashboard path to reflect the changes
+      revalidatePath("/dashboard")
+      
+      // Return successful response
+      return createSuccessResponse(data || [])
+    } catch (error) {
+      return handleCatchError(error, "createProject", {})
+    }
+  }, { component: 'projects' })
 }
 
-export async function deleteProject(formData: FormData) {
-  const cookieStore = cookies()
-  const supabase = createServerClient(cookieStore)
+export async function deleteProject(projectId: string): Promise<ApiResponse<{ success: boolean }>> {
+  return logger.trackPerformance('deleteProject', async () => {
+    try {
+      const supabase = createClient()
 
-  // Get the current user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-  if (!user) {
-    return { error: "Not authenticated" }
-  }
+      // Check authentication
+      const authError = requireAuthentication(session)
+      if (authError) return authError
 
-  const id = formData.get("id") as string
+      // Session is now guaranteed to be non-null
+      const userId = session!.user.id
 
-  if (!id) {
-    return { error: "Project ID is required" }
-  }
+      // Apply rate limiting to prevent abuse
+      const rateLimitKey = `delete_project:${userId}`
+      const isAllowed = await checkRateLimit(rateLimitKey, 5, 60) // 5 requests per minute
+      
+      if (!isAllowed) {
+        return createErrorResponse(
+          ErrorCode.RATE_LIMITED,
+          "Too many requests. Please try again later."
+        )
+      }
 
-  // Validate that the user owns this project before deleting
-  const hasAccess = await validateUserAccess(supabase, "projects", id, user.id)
+      // Check if the user has permission to delete this project using RLS policies
+      const canDelete = await ProjectRLS.canDelete(projectId, userId)
+      if (!canDelete) {
+        logger.warn("Unauthorized delete attempt", { 
+          userId, 
+          context: { projectId }
+        })
+        return createErrorResponse(
+          ErrorCode.UNAUTHORIZED,
+          "You don't have permission to delete this project or it has dependencies"
+        )
+      }
 
-  if (!hasAccess) {
-    return { error: "You do not have permission to delete this project" }
-  }
+      // Delete the project
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectId)
 
-  const { error } = await supabase.from("projects").delete().eq("id", id)
+      // Handle database errors
+      if (error) {
+        return handleDatabaseError(error, "deleteProject", { userId: session!.user.id, projectId: projectId })
+      }
 
-  if (error) {
-    return { error: error.message }
-  }
-
-  revalidatePath("/dashboard")
-  return { success: true }
+      // Revalidate the dashboard path to reflect the changes
+      revalidatePath("/dashboard")
+      
+      // Return successful response
+      return createSuccessResponse({ success: true })
+    } catch (error) {
+      return handleCatchError(error, "deleteProject", { projectId })
+    }
+  }, { component: 'projects' })
 }
 
-export async function getUserProfile() {
-  const supabase = createClient()
+export async function getUserProfile(): Promise<ApiResponse<Profile | null>> {
+  return logger.trackPerformance('getUserProfile', async () => {
+    try {
+      const supabase = createClient()
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-  if (!session) {
-    return null
-  }
+      // Check authentication
+      if (!session) {
+        return createErrorResponse(
+          ErrorCode.UNAUTHORIZED,
+          "Not authenticated"
+        )
+      }
 
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", session.user.id).single()
+      // Session is now guaranteed to be non-null
+      const userId = session.user.id
 
-  if (error) {
-    console.error("Error fetching user profile:", error)
-    return null
-  }
+      // Apply rate limiting to prevent abuse
+      const rateLimitKey = `get_profile:${userId}`
+      const isAllowed = await checkRateLimit(rateLimitKey, 20, 60) // 20 requests per minute
+      
+      if (!isAllowed) {
+        return createErrorResponse(
+          ErrorCode.RATE_LIMITED,
+          "Too many requests. Please try again later."
+        )
+      }
 
-  return data
+      // Fetch user profile from database
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single() as { data: Profile | null, error: any }
+
+      // Handle database errors
+      if (error) {
+        return handleDatabaseError(error, "getUserProfile", { userId: session.user.id })
+      }
+
+      // Return successful response
+      return createSuccessResponse(data)
+    } catch (error) {
+      return handleCatchError(error, "getUserProfile", {})
+    }
+  }, { component: 'profiles' })
 }
